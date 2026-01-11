@@ -1,0 +1,28 @@
+# build output
+build/
+out/
+*.o
+*.a
+*.so
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+.coverage
+
+# node
+node_modules/
+web/dist/
+
+# local data
+runs/
+*.log
+.env
+
+# editors
+.vscode/
+.idea/
+.DS_Store
