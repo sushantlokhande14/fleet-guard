@@ -14,8 +14,10 @@ endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-add_library(fgcore INTERFACE)
-target_include_directories(fgcore INTERFACE include)
+add_library(fgcore STATIC
+  src/path.cpp
+)
+target_include_directories(fgcore PUBLIC include)
 
 if(FG_BUILD_TESTS)
   enable_testing()
@@ -23,6 +25,7 @@ if(FG_BUILD_TESTS)
   add_executable(fgcore_tests
     tests/test_math.cpp
     tests/test_rng.cpp
+    tests/test_path.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
