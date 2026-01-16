@@ -16,6 +16,7 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 
 add_library(fgcore STATIC
   src/path.cpp
+  src/vehicle.cpp
 )
 target_include_directories(fgcore PUBLIC include)
 
@@ -26,6 +27,7 @@ if(FG_BUILD_TESTS)
     tests/test_math.cpp
     tests/test_rng.cpp
     tests/test_path.cpp
+    tests/test_vehicle.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
