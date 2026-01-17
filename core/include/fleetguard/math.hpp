@@ -20,6 +20,8 @@ struct Vec2 {
   constexpr Vec2 operator*(double s) const { return {x * s, y * s}; }
   constexpr Vec2 operator/(double s) const { return {x / s, y / s}; }
   constexpr Vec2 operator-() const { return {-x, -y}; }
+  constexpr bool operator==(Vec2 o) const { return x == o.x && y == o.y; }
+  constexpr bool operator!=(Vec2 o) const { return !(*this == o); }
   Vec2& operator+=(Vec2 o) {
     x += o.x;
     y += o.y;

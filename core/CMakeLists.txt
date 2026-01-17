@@ -14,11 +14,15 @@ endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
+find_package(nlohmann_json 3 REQUIRED)
+
 add_library(fgcore STATIC
   src/path.cpp
   src/vehicle.cpp
+  src/scenario.cpp
 )
 target_include_directories(fgcore PUBLIC include)
+target_link_libraries(fgcore PUBLIC nlohmann_json::nlohmann_json)
 
 if(FG_BUILD_TESTS)
   enable_testing()
@@ -28,6 +32,7 @@ if(FG_BUILD_TESTS)
     tests/test_rng.cpp
     tests/test_path.cpp
     tests/test_vehicle.cpp
+    tests/test_scenario.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
