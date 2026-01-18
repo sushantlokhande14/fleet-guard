@@ -20,6 +20,7 @@ add_library(fgcore STATIC
   src/path.cpp
   src/vehicle.cpp
   src/scenario.cpp
+  src/controller.cpp
 )
 target_include_directories(fgcore PUBLIC include)
 target_link_libraries(fgcore PUBLIC nlohmann_json::nlohmann_json)
@@ -33,6 +34,7 @@ if(FG_BUILD_TESTS)
     tests/test_path.cpp
     tests/test_vehicle.cpp
     tests/test_scenario.cpp
+    tests/test_controller.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
