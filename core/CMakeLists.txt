@@ -22,6 +22,7 @@ add_library(fgcore STATIC
   src/scenario.cpp
   src/controller.cpp
   src/build_config.cpp
+  src/actors.cpp
 )
 target_include_directories(fgcore PUBLIC include)
 target_link_libraries(fgcore PUBLIC nlohmann_json::nlohmann_json)
@@ -37,6 +38,7 @@ if(FG_BUILD_TESTS)
     tests/test_scenario.cpp
     tests/test_controller.cpp
     tests/test_build_config.cpp
+    tests/test_actors.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
