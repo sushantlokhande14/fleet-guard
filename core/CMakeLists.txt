@@ -23,9 +23,16 @@ add_library(fgcore STATIC
   src/controller.cpp
   src/build_config.cpp
   src/actors.cpp
+  src/planner.cpp
+  src/sim.cpp
+  src/io.cpp
 )
 target_include_directories(fgcore PUBLIC include)
 target_link_libraries(fgcore PUBLIC nlohmann_json::nlohmann_json)
+
+add_executable(fgsim src/main.cpp)
+target_link_libraries(fgsim PRIVATE fgcore)
+install(TARGETS fgsim RUNTIME DESTINATION bin)
 
 if(FG_BUILD_TESTS)
   enable_testing()
@@ -39,6 +46,7 @@ if(FG_BUILD_TESTS)
     tests/test_controller.cpp
     tests/test_build_config.cpp
     tests/test_actors.cpp
+    tests/test_sim.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
