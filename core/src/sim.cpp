@@ -6,6 +6,7 @@
 #include "fleetguard/actors.hpp"
 #include "fleetguard/controller.hpp"
 #include "fleetguard/planner.hpp"
+#include "fleetguard/safety.hpp"
 #include "fleetguard/vehicle.hpp"
 
 namespace fg {
@@ -96,6 +97,10 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     hint = pr.segment;
     last_s = pr.s;
 
+    const Hazard hz = nearest_in_path(ego, vp, actors.states());
+    sum.min_gap = std::min(sum.min_gap, hz.gap);
+    sum.min_ttc = std::min(sum.min_ttc, hz.ttc);
+
     const Plan& plan = planner.update(t, ego);
     ControlTarget tgt{&planner.active_path(), plan.lateral_offset, plan.accel, plan.v_ref(t)};
     const ControlOutput cmd = controller.update(ego, tgt);
@@ -116,6 +121,8 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
       f.heading_err = wrap_angle(ego.yaw - pr.heading);
       f.v_ref = tgt.v_ref;
       f.target_speed = plan.v_cap;
+      f.gt_gap = hz.gap;
+      f.ttc = hz.ttc;
       res.frames.push_back(f);
     }
 
@@ -142,6 +149,17 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     sum.lat_acc_max = std::max(sum.lat_acc_max, std::fabs(ego.v * ego.v * std::tan(ego.steer) / vp.wheelbase));
     sum.distance_m += ego.v * dt;
 
+    bool crashed = false;
+    for (const auto& a : actors.states()) {
+      if (collides(ego, vp, a)) {
+        sum.outcome = "collision";
+        sum.reason = to_string(a.kind);
+        res.events.push_back({t, "collision", 3, ego.v, 0.0, std::string(to_string(a.kind)) + " " + std::to_string(a.id)});
+        crashed = true;
+        break;
+      }
+    }
+    if (crashed) break;
     if (pr.s >= sc.route.length() - 2.0) break;
     if (t >= sc.time_limit) {
       sum.outcome = "timeout";

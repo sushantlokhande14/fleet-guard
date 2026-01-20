@@ -47,3 +47,28 @@ TEST(Sim, FramesLoggedAtTenHertz) {
   quiet.record_frames = false;
   EXPECT_TRUE(run_drive(sc, BuildConfig{}, quiet).frames.empty());
 }
+
+TEST(Sim, CollisionEndsTheDrive) {
+  // a car coming up fast from behind; nothing in the stack looks backwards
+  Scenario sc = make_scenario("s_curve", 1);
+  sc.actors.clear();
+  ActorSpec rammer;
+  rammer.id = 9;
+  rammer.s0 = -40.0;
+  rammer.v0 = sc.ego_v0 + 12.0;
+  rammer.max_speed = 60.0;
+  sc.actors.push_back(rammer);
+  DriveResult r = run_drive(sc, BuildConfig{});
+  EXPECT_EQ(r.summary.outcome, "collision");
+  ASSERT_FALSE(r.events.empty());
+  EXPECT_EQ(r.events.back().kind, "collision");
+  EXPECT_LT(r.summary.duration_s, 10.0);
+}
+
+TEST(Sim, TracksGapToLead) {
+  Scenario sc = make_scenario("highway_follow", 4);
+  DriveResult r = run_drive(sc, BuildConfig{});
+  ASSERT_FALSE(r.frames.empty());
+  EXPECT_TRUE(std::isfinite(r.frames.front().gt_gap));
+  EXPECT_LT(r.summary.min_gap, 70.0);
+}
