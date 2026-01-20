@@ -6,7 +6,7 @@ using namespace fg;
 
 TEST(Scenario, FamiliesAreRegistered) {
   const auto& fams = scenario_families();
-  EXPECT_GE(fams.size(), 4u);
+  EXPECT_EQ(fams.size(), 7u);
   for (const auto& f : fams) EXPECT_TRUE(is_family(f));
   EXPECT_FALSE(is_family("teleport"));
   EXPECT_THROW(make_scenario("teleport", 1), std::invalid_argument);
@@ -50,6 +50,28 @@ TEST(Scenario, WeatherMixCoversAllKinds) {
   EXPECT_GT(counts[0], 300);
   EXPECT_GT(counts[1], 50);
   EXPECT_GT(counts[2], 20);
+}
+
+TEST(Scenario, ConstructionMapDiffersFromLiveLane) {
+  for (uint64_t seed = 0; seed < 20; ++seed) {
+    const Scenario sc = make_scenario("construction_shift", seed);
+    // the prior map runs straight through the work zone
+    double max_dev = 0;
+    for (double s = 0; s < sc.map_route.length(); s += 5) max_dev = std::max(max_dev, std::fabs(sc.route.project(sc.map_route.point_at(s)).lateral));
+    EXPECT_GT(max_dev, 2.7) << sc.id();
+    int cones = 0;
+    for (const auto& a : sc.actors) cones += a.kind == ActorKind::Cone;
+    EXPECT_GE(cones, 5) << sc.id();
+    EXPECT_LT(sc.speed_limit_at(sc.route.length() / 2), sc.default_limit);
+    EXPECT_TRUE(sc.geometry().contains("map_route"));
+  }
+}
+
+TEST(Scenario, IntersectionTurnIsAQuarterTurn) {
+  const Scenario sc = make_scenario("intersection_turn", 5);
+  const double h0 = sc.route.heading_at(1.0);
+  const double h1 = sc.route.heading_at(sc.route.length() - 1.0);
+  EXPECT_NEAR(std::fabs(wrap_angle(h1 - h0)), kPi / 2, 0.02);
 }
 
 TEST(Scenario, GeometryExport) {

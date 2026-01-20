@@ -220,6 +220,95 @@ Scenario s_curve(Rng& r) {
   return sc;
 }
 
+// 90 degree turn at an intersection, sometimes behind another car.
+Scenario intersection_turn(Rng& r) {
+  Scenario sc;
+  sc.default_limit = r.uniform(11.0, 14.0);
+  sc.route = PathBuilder()
+                 .straight(r.uniform(60, 110))
+                 .arc(r.uniform(11, 20), random_sign(r) * kPi / 2)
+                 .straight(r.uniform(120, 200))
+                 .build();
+  sc.ego_v0 = sc.default_limit * 0.9;
+  if (r.bernoulli(0.5)) {
+    ActorSpec lead = vehicle(1, r.uniform(25, 40), 0.0, sc.ego_v0 * 0.85);
+    lead.speed_changes.push_back({r.uniform(2.0, 5.0), -1.5, 2.5});
+    lead.speed_changes.push_back({9.0, 1.0, 4.0});
+    lead.min_speed = 3.0;
+    lead.max_speed = sc.default_limit * 0.9;
+    sc.actors.push_back(lead);
+  }
+  pick_weather(sc, r);
+  finish(sc, sc.default_limit * 0.75);
+  return sc;
+}
+
+// Work zone: the live lane is shifted sideways while the prior map still has the
+// old alignment, and cones sit on the old lane centre.
+Scenario construction_shift(Rng& r) {
+  Scenario sc;
+  sc.default_limit = r.uniform(20.0, 25.0);
+  const double a = r.uniform(150, 220);
+  const double shift_len = r.uniform(30, 45);
+  const double zone_len = r.uniform(60, 120);
+  const double back_len = r.uniform(30, 45);
+  const double tail = r.uniform(100, 180);
+  const double shift = random_sign(r) * r.uniform(2.8, 3.4);
+
+  sc.route = PathBuilder().straight(a).lane_shift(shift_len, shift).straight(zone_len).lane_shift(back_len, -shift).straight(tail).build();
+  sc.map_route = PathBuilder().straight(a + shift_len + zone_len + back_len + tail).build();
+
+  const double zone_limit = r.uniform(11.0, 14.0);
+  sc.zones.push_back({a - 60.0, a + shift_len + zone_len + back_len + 20.0, zone_limit});
+
+  // cones along the closed lane wherever it is displaced from the live lane
+  int id = 1;
+  for (double x = a + 8.0; x < a + shift_len + zone_len + back_len - 8.0; x += 8.0) {
+    const Projection pr = sc.route.project(sc.map_route.point_at(x));
+    if (std::fabs(pr.lateral) < 1.6) continue;
+    ActorSpec c;
+    c.id = id++;
+    c.kind = ActorKind::Cone;
+    c.s0 = pr.s;
+    c.lat0 = c.lat1 = pr.lateral;
+    c.length = c.width = 0.4;
+    c.max_speed = 0.0;
+    sc.actors.push_back(c);
+  }
+  sc.ego_v0 = sc.default_limit * 0.9;
+  pick_weather(sc, r);
+  finish(sc, zone_limit);
+  return sc;
+}
+
+// Dense traffic: the lead repeatedly brakes, sometimes to a stop, and pulls away.
+Scenario stop_and_go(Rng& r) {
+  Scenario sc;
+  sc.default_limit = r.uniform(14.0, 19.0);
+  sc.route = PathBuilder()
+                 .straight(r.uniform(200, 300))
+                 .arc(r.uniform(200, 400), random_sign(r) * deg2rad(r.uniform(5, 15)))
+                 .straight(r.uniform(150, 250))
+                 .build();
+  sc.ego_v0 = r.uniform(6.0, 10.0);
+  ActorSpec lead = vehicle(1, r.uniform(18, 30), 0.0, sc.ego_v0);
+  double t = r.uniform(3.0, 6.0);
+  const int cycles = r.uniform_int(4, 6);
+  for (int k = 0; k < cycles; ++k) {
+    const double brake = r.uniform(1.5, 3.0);
+    lead.speed_changes.push_back({t, -r.uniform(2.0, 4.5), brake});
+    t += brake + r.uniform(1.0, 3.0);
+    const double go = r.uniform(2.0, 4.0);
+    lead.speed_changes.push_back({t, r.uniform(1.0, 2.0), go});
+    t += go + r.uniform(1.0, 3.0);
+  }
+  lead.max_speed = sc.default_limit * 0.9;
+  sc.actors.push_back(lead);
+  pick_weather(sc, r);
+  finish(sc, sc.default_limit * 0.5, 30.0);
+  return sc;
+}
+
 using Generator = std::function<Scenario(Rng&)>;
 
 const std::map<std::string, Generator>& generators() {
@@ -228,6 +317,9 @@ const std::map<std::string, Generator>& generators() {
       {"urban_cut_in", urban_cut_in},
       {"ped_crossing", ped_crossing},
       {"s_curve", s_curve},
+      {"intersection_turn", intersection_turn},
+      {"construction_shift", construction_shift},
+      {"stop_and_go", stop_and_go},
   };
   return g;
 }
