@@ -5,6 +5,7 @@
 
 #include "fleetguard/actors.hpp"
 #include "fleetguard/controller.hpp"
+#include "fleetguard/events.hpp"
 #include "fleetguard/planner.hpp"
 #include "fleetguard/safety.hpp"
 #include "fleetguard/vehicle.hpp"
@@ -19,48 +20,6 @@ double percentile(std::vector<double> v, double p) {
   const size_t hi = std::min(lo + 1, v.size() - 1);
   return lerp(v[lo], v[hi], idx - lo);
 }
-
-namespace {
-
-// Counts direction reversals of a signal, ignoring wiggles smaller than `gap`
-// (the steering-reversal-rate metric from driver behaviour studies).
-class ReversalCounter {
- public:
-  explicit ReversalCounter(double gap) : gap_(gap) {}
-  void add(double x) {
-    if (!init_) {
-      lo_ = hi_ = x;
-      init_ = true;
-      return;
-    }
-    if (dir_ >= 0) {
-      if (x > hi_) hi_ = x;
-      if (hi_ - x > gap_) {
-        if (dir_ > 0) ++count_;
-        dir_ = -1;
-        lo_ = x;
-      }
-    }
-    if (dir_ <= 0) {
-      if (x < lo_) lo_ = x;
-      if (x - lo_ > gap_) {
-        if (dir_ < 0) ++count_;
-        dir_ = 1;
-        hi_ = x;
-      }
-    }
-  }
-  int count() const { return count_; }
-
- private:
-  double gap_;
-  bool init_ = false;
-  int dir_ = 0;
-  double lo_ = 0, hi_ = 0;
-  int count_ = 0;
-};
-
-}  // namespace
 
 DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOptions& opt) {
   DriveResult res;
@@ -83,14 +42,30 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
   Controller controller(build.control, vp, dt);
   Actuators actuators(vp, build.control.actuator_delay_ms / 1000.0, dt, sc.friction);
 
+  // event detectors (thresholds are fixed so every build is judged the same way)
+  EpisodeDetector off_route("off_route", 2, 0.5);
+  EpisodeDetector hard_brake("hard_brake", 2, 0.2, /*peak_is_max=*/false);
+  EpisodeDetector steer_osc("steer_oscillation", 2, 0.5);
+  EpisodeDetector accel_osc("accel_oscillation", 2, 0.5);
+  OscillationDetector steer_osc_sig(0.01, 4.0, 4);
+  // >= 0.6 Hz: curve-to-curve speed changes on winding roads are slower than that
+  OscillationDetector accel_osc_sig(0.6, 4.0, 5);
+  ReversalCounter steer_rev(0.01), accel_rev(0.5);
+
   std::vector<double> cte_abs;
   double cte_sq = 0.0, jerk_sq = 0.0, speed_sum = 0.0;
-  ReversalCounter steer_rev(0.01), accel_rev(0.5);
   size_t hint = Path::npos;
   double prev_a = ego.a;
   long tick = 0;
   double t = 0.0;
   double last_s = 0.0;
+  Frame last_frame;
+
+  auto disengage = [&](const std::string& reason, double value, const std::string& detail) {
+    sum.outcome = "disengaged";
+    sum.reason = reason;
+    res.events.push_back({t, "disengagement", 3, value, 0.0, reason + (detail.empty() ? "" : " " + detail)});
+  };
 
   while (true) {
     const Projection pr = sc.route.project(ego.pos, hint);
@@ -105,35 +80,48 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     ControlTarget tgt{&planner.active_path(), plan.lateral_offset, plan.accel, plan.v_ref(t)};
     const ControlOutput cmd = controller.update(ego, tgt);
 
-    if (opt.record_frames && tick % opt.log_every == 0) {
-      Frame f;
-      f.t = t;
-      f.x = ego.pos.x;
-      f.y = ego.pos.y;
-      f.yaw = ego.yaw;
-      f.v = ego.v;
-      f.a = ego.a;
-      f.steer = ego.steer;
-      f.steer_cmd = cmd.steer_cmd;
-      f.accel_cmd = cmd.accel_cmd;
-      f.s = pr.s;
-      f.cte = pr.lateral;
-      f.heading_err = wrap_angle(ego.yaw - pr.heading);
-      f.v_ref = tgt.v_ref;
-      f.target_speed = plan.v_cap;
-      f.gt_gap = hz.gap;
-      f.ttc = hz.ttc;
-      res.frames.push_back(f);
-    }
+    Frame f;
+    f.t = t;
+    f.x = ego.pos.x;
+    f.y = ego.pos.y;
+    f.yaw = ego.yaw;
+    f.v = ego.v;
+    f.a = ego.a;
+    f.steer = ego.steer;
+    f.steer_cmd = cmd.steer_cmd;
+    f.accel_cmd = cmd.accel_cmd;
+    f.s = pr.s;
+    f.cte = pr.lateral;
+    f.heading_err = wrap_angle(ego.yaw - pr.heading);
+    f.v_ref = tgt.v_ref;
+    f.target_speed = plan.v_cap;
+    f.gt_gap = hz.gap;
+    f.ttc = hz.ttc;
+    if (opt.record_frames && tick % opt.log_every == 0) res.frames.push_back(f);
+    last_frame = f;
 
-    // per-tick statistics
+    // per-tick statistics and event detection
     const double cte = std::fabs(pr.lateral);
     cte_abs.push_back(cte);
     cte_sq += cte * cte;
-    sum.heading_err_max = std::max(sum.heading_err_max, std::fabs(wrap_angle(ego.yaw - pr.heading)));
+    sum.heading_err_max = std::max(sum.heading_err_max, std::fabs(f.heading_err));
     speed_sum += ego.v;
     steer_rev.add(ego.steer);
     accel_rev.add(ego.a);
+    off_route.update(t, cte > 0.5, cte, res.events);
+    hard_brake.update(t, ego.a < -4.0, ego.a, res.events);
+    steer_osc.update(t, steer_osc_sig.update(t, ego.steer), steer_osc_sig.in_window(), res.events);
+    accel_osc.update(t, accel_osc_sig.update(t, ego.a), accel_osc_sig.in_window(), res.events);
+
+    // safety monitor: the safety driver takes over on imminent conflict or lane departure
+    if (hz.ttc < opt.ttc_takeover && hz.gap < opt.takeover_gap_max) {
+      disengage("ttc_takeover", hz.ttc, std::string(to_string(hz.kind)) + " " + std::to_string(hz.id));
+      break;
+    }
+    if (cte > opt.lane_departure_m) {
+      disengage("lane_departure", cte, "");
+      break;
+    }
 
     // advance the world
     actuators.apply(cmd.steer_cmd, cmd.accel_cmd, ego);
@@ -168,6 +156,18 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     }
   }
 
+  // close open episodes and stamp the final state so replays show where it ended
+  off_route.flush(t, res.events);
+  hard_brake.flush(t, res.events);
+  steer_osc.flush(t, res.events);
+  accel_osc.flush(t, res.events);
+  if (opt.record_frames && sum.outcome != "completed") {
+    last_frame.engaged = 0;
+    if (res.frames.empty() || res.frames.back().t < last_frame.t) res.frames.push_back(last_frame);
+    else res.frames.back().engaged = 0;
+  }
+  std::stable_sort(res.events.begin(), res.events.end(), [](const Event& a, const Event& b) { return a.t < b.t; });
+
   const double n = static_cast<double>(std::max<long>(1, tick));
   sum.duration_s = t;
   sum.route_completion = clamp(last_s / sc.route.length(), 0.0, 1.0);
@@ -179,6 +179,7 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
   sum.jerk_rms = std::sqrt(jerk_sq / n);
   sum.steer_reversal_rate = steer_rev.count() / std::max(t, 1.0);
   sum.accel_reversal_rate = accel_rev.count() / std::max(t, 1.0);
+  sum.hard_brakes = hard_brake.episodes();
   sum.n_events = static_cast<int>(res.events.size());
   return res;
 }

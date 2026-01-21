@@ -72,3 +72,34 @@ TEST(Sim, TracksGapToLead) {
   EXPECT_TRUE(std::isfinite(r.frames.front().gt_gap));
   EXPECT_LT(r.summary.min_gap, 70.0);
 }
+
+TEST(Sim, LaneDepartureDisengages) {
+  Scenario sc = make_scenario("s_curve", 6);
+  sc.actors.clear();
+  BuildConfig wobbly;
+  wobbly.control.steer_gain = 2.6;
+  wobbly.control.actuator_delay_ms = 160;
+  DriveResult r = run_drive(sc, wobbly);
+  EXPECT_EQ(r.summary.outcome, "disengaged");
+  EXPECT_EQ(r.summary.reason, "lane_departure");
+  bool osc = false, dis = false;
+  for (const auto& e : r.events) {
+    osc |= e.kind == "steer_oscillation";
+    dis |= e.kind == "disengagement";
+  }
+  EXPECT_TRUE(osc);
+  EXPECT_TRUE(dis);
+  EXPECT_EQ(r.frames.back().engaged, 0);
+}
+
+TEST(Sim, BaselineHasNoControlEventsOnEmptyRoads) {
+  for (const auto& fam : {"s_curve", "intersection_turn", "construction_shift"}) {
+    for (uint64_t seed = 0; seed < 15; ++seed) {
+      Scenario sc = make_scenario(fam, seed);
+      sc.actors.clear();
+      DriveResult r = run_drive(sc, BuildConfig{});
+      EXPECT_EQ(r.summary.outcome, "completed") << sc.id();
+      for (const auto& e : r.events) ADD_FAILURE() << sc.id() << " unexpected " << e.kind << " at " << e.t;
+    }
+  }
+}
