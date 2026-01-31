@@ -99,7 +99,21 @@ TEST(Sim, BaselineHasNoControlEventsOnEmptyRoads) {
       sc.actors.clear();
       DriveResult r = run_drive(sc, BuildConfig{});
       EXPECT_EQ(r.summary.outcome, "completed") << sc.id();
-      for (const auto& e : r.events) ADD_FAILURE() << sc.id() << " unexpected " << e.kind << " at " << e.t;
+      for (const auto& e : r.events) {
+        if (e.kind == "phantom_object") continue;  // sensor clutter, not a control event
+        ADD_FAILURE() << sc.id() << " unexpected " << e.kind << " at " << e.t;
+      }
     }
   }
+}
+
+TEST(Sim, PerceptionIsScored) {
+  Scenario sc = make_scenario("highway_follow", 4);
+  DriveResult r = run_drive(sc, BuildConfig{});
+  EXPECT_GT(r.summary.det_tp, 50);
+  EXPECT_GT(r.summary.recall, 0.8);
+  EXPECT_LE(r.summary.recall, 1.0);
+  bool tracked = false;
+  for (const auto& f : r.frames) tracked |= f.n_tracks > 0;
+  EXPECT_TRUE(tracked);
 }

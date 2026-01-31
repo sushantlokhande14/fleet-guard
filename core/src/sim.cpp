@@ -6,6 +6,7 @@
 #include "fleetguard/actors.hpp"
 #include "fleetguard/controller.hpp"
 #include "fleetguard/events.hpp"
+#include "fleetguard/perception.hpp"
 #include "fleetguard/planner.hpp"
 #include "fleetguard/safety.hpp"
 #include "fleetguard/vehicle.hpp"
@@ -38,6 +39,7 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
   ego.v = sc.ego_v0;
 
   ActorSim actors(sc);
+  Perception perception(build.perception, sc, dt);
   Planner planner(build.planner, sc);
   Controller controller(build.control, vp, dt);
   Actuators actuators(vp, build.control.actuator_delay_ms / 1000.0, dt, sc.friction);
@@ -76,6 +78,8 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     sum.min_gap = std::min(sum.min_gap, hz.gap);
     sum.min_ttc = std::min(sum.min_ttc, hz.ttc);
 
+    const auto& objects = perception.update(t, ego, actors.states(), res.events);
+    const PerceptionTickStats& ps = perception.tick_stats();
     const Plan& plan = planner.update(t, ego);
     ControlTarget tgt{&planner.active_path(), plan.lateral_offset, plan.accel, plan.v_ref(t)};
     const ControlOutput cmd = controller.update(ego, tgt);
@@ -97,6 +101,10 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     f.target_speed = plan.v_cap;
     f.gt_gap = hz.gap;
     f.ttc = hz.ttc;
+    f.n_tracks = static_cast<int>(objects.size());
+    f.n_relevant = ps.relevant;
+    f.n_missed = ps.missed;
+    f.n_phantom = ps.phantom;
     if (opt.record_frames && tick % opt.log_every == 0) res.frames.push_back(f);
     last_frame = f;
 
@@ -157,6 +165,7 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
   }
 
   // close open episodes and stamp the final state so replays show where it ended
+  perception.flush(t, res.events);
   off_route.flush(t, res.events);
   hard_brake.flush(t, res.events);
   steer_osc.flush(t, res.events);
@@ -180,6 +189,11 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
   sum.steer_reversal_rate = steer_rev.count() / std::max(t, 1.0);
   sum.accel_reversal_rate = accel_rev.count() / std::max(t, 1.0);
   sum.hard_brakes = hard_brake.episodes();
+  sum.det_tp = perception.total_tp();
+  sum.det_fn = perception.total_fn();
+  sum.det_fp = perception.total_fp();
+  sum.recall = sum.det_tp + sum.det_fn > 0 ? static_cast<double>(sum.det_tp) / (sum.det_tp + sum.det_fn) : 1.0;
+  sum.precision = sum.det_tp + sum.det_fp > 0 ? static_cast<double>(sum.det_tp) / (sum.det_tp + sum.det_fp) : 1.0;
   sum.n_events = static_cast<int>(res.events.size());
   return res;
 }
