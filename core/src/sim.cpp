@@ -74,13 +74,13 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     hint = pr.segment;
     last_s = pr.s;
 
-    const Hazard hz = nearest_in_path(ego, vp, actors.states());
+    const Hazard hz = nearest_in_path(sc.route, pr, ego, vp, actors.states());
     sum.min_gap = std::min(sum.min_gap, hz.gap);
     sum.min_ttc = std::min(sum.min_ttc, hz.ttc);
 
     const auto& objects = perception.update(t, ego, actors.states(), res.events);
     const PerceptionTickStats& ps = perception.tick_stats();
-    const Plan& plan = planner.update(t, ego);
+    const Plan& plan = planner.update(t, ego, objects);
     ControlTarget tgt{&planner.active_path(), plan.lateral_offset, plan.accel, plan.v_ref(t)};
     const ControlOutput cmd = controller.update(ego, tgt);
 
@@ -99,6 +99,8 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     f.heading_err = wrap_angle(ego.yaw - pr.heading);
     f.v_ref = tgt.v_ref;
     f.target_speed = plan.v_cap;
+    f.lead_id = plan.lead_id;
+    f.lead_gap = plan.lead_gap;
     f.gt_gap = hz.gap;
     f.ttc = hz.ttc;
     f.n_tracks = static_cast<int>(objects.size());

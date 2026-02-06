@@ -47,7 +47,7 @@ void visit(PlannerParams& p, V&& v) {
   v("max_decel", p.max_decel);
   v("speed_gain", p.speed_gain);
   v("lat_accel_max", p.lat_accel_max);
-  v("corridor_half_width_m", p.corridor_half_width_m);
+  v("lateral_margin_m", p.lateral_margin_m);
   v("predict_cut_ins", p.predict_cut_ins);
   v("cut_in_horizon_s", p.cut_in_horizon_s);
   v("yield_to_crossing_peds", p.yield_to_crossing_peds);

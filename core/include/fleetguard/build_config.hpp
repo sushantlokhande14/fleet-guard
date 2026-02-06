@@ -25,7 +25,7 @@ struct PerceptionParams {
   double pos_noise_m = 0.12;        // position noise sigma at zero range
   double pos_noise_per_m = 0.004;   // sigma growth with range
   double range_scale = 1.0;         // calibration: measured range = true range * scale
-  double fp_rate = 0.002;           // per-frame probability of a phantom detection
+  double fp_rate = 0.0008;          // per-frame probability of a phantom detection
   int fp_max_frames = 3;            // longest a phantom persists
   double latency_ms = 60.0;         // sensor-to-track latency
   int confirm_frames = 2;           // detections before a track is reported
@@ -48,7 +48,7 @@ struct PlannerParams {
   double max_decel = 7.5;
   double speed_gain = 0.6;
   double lat_accel_max = 2.2;
-  double corridor_half_width_m = 1.9;
+  double lateral_margin_m = 0.4;  // clearance beyond both half-widths for "in my path"
 
   bool predict_cut_ins = true;
   double cut_in_horizon_s = 2.0;

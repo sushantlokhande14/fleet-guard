@@ -5,23 +5,20 @@
 
 namespace fg {
 
-Hazard nearest_in_path(const VehicleState& ego, const VehicleParams& vp, const std::vector<ActorState>& actors,
-                       double lateral_margin) {
+Hazard nearest_in_path(const Path& route, const Projection& ego_pr, const VehicleState& ego, const VehicleParams& vp,
+                       const std::vector<ActorState>& actors, double lateral_margin) {
   Hazard h;
-  const Vec2 fwd = Vec2::from_angle(ego.yaw);
-  const Vec2 left = fwd.perp();
+  const double v_along = ego.v * std::cos(wrap_angle(ego.yaw - ego_pr.heading));
   for (const auto& a : actors) {
-    const Vec2 rel = a.pos - ego.pos;
-    const double dx = rel.dot(fwd);
-    const double dy = rel.dot(left);
-    if (dx <= 0.0) continue;
-    if (std::fabs(dy) > 0.5 * (vp.width + a.width) + lateral_margin) continue;
-    const double gap = dx - 0.5 * (vp.length + a.length);
+    const double ds = a.s - ego_pr.s;
+    if (ds <= 0.0) continue;
+    if (std::fabs(a.lat - ego_pr.lateral) > 0.5 * (vp.width + a.width) + lateral_margin) continue;
+    const double gap = ds - 0.5 * (vp.length + a.length);
     if (gap >= h.gap) continue;
     h.id = a.id;
     h.kind = a.kind;
     h.gap = gap;
-    const double closing = ego.v - a.vel.dot(fwd);
+    const double closing = v_along - a.vel.dot(route.tangent_at(a.s));
     h.ttc = (closing > 0.1 && gap > 0.0) ? gap / closing : (gap <= 0.0 ? 0.0 : kInf);
   }
   return h;

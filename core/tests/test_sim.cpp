@@ -97,7 +97,9 @@ TEST(Sim, BaselineHasNoControlEventsOnEmptyRoads) {
     for (uint64_t seed = 0; seed < 15; ++seed) {
       Scenario sc = make_scenario(fam, seed);
       sc.actors.clear();
-      DriveResult r = run_drive(sc, BuildConfig{});
+      BuildConfig no_clutter;
+      no_clutter.perception.fp_rate = 0.0;
+      DriveResult r = run_drive(sc, no_clutter);
       EXPECT_EQ(r.summary.outcome, "completed") << sc.id();
       for (const auto& e : r.events) {
         if (e.kind == "phantom_object") continue;  // sensor clutter, not a control event

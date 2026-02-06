@@ -155,8 +155,14 @@ Scenario urban_cut_in(Rng& r) {
                  .build();
   sc.ego_v0 = sc.default_limit * 0.95;
   const double side = random_sign(r);
-  ActorSpec cut = vehicle(1, r.uniform(12, 35), side * kLane, sc.ego_v0 * r.uniform(0.70, 0.92));
-  cut.t_lat = r.uniform(2.5, 6.0);
+  const double v_cut = sc.ego_v0 * r.uniform(0.70, 0.92);
+  const double t_lat = r.uniform(2.5, 6.0);
+  // place the cutter so the bumper gap when it starts moving over is 5-25 m;
+  // ego closes in on it until then
+  const double gap_at_cut = r.uniform(5.0, 25.0);
+  const double s0 = gap_at_cut + 4.7 + (sc.ego_v0 - v_cut) * t_lat;
+  ActorSpec cut = vehicle(1, s0, side * kLane, v_cut);
+  cut.t_lat = t_lat;
   cut.lat_duration = r.uniform(2.0, 3.5);
   cut.lat1 = 0.0;
   if (r.bernoulli(0.5)) cut.speed_changes.push_back({cut.t_lat + cut.lat_duration, 1.0, 3.0});
@@ -295,17 +301,20 @@ Scenario stop_and_go(Rng& r) {
   double t = r.uniform(3.0, 6.0);
   const int cycles = r.uniform_int(4, 6);
   for (int k = 0; k < cycles; ++k) {
-    const double brake = r.uniform(1.5, 3.0);
-    lead.speed_changes.push_back({t, -r.uniform(2.0, 4.5), brake});
-    t += brake + r.uniform(1.0, 3.0);
-    const double go = r.uniform(2.0, 4.0);
-    lead.speed_changes.push_back({t, r.uniform(1.0, 2.0), go});
-    t += go + r.uniform(1.0, 3.0);
+    // brake, pause, then pull away until back at the cruise speed: each cycle nets zero
+    const double brake_dur = r.uniform(1.5, 3.0);
+    const double brake = r.uniform(2.0, 4.5);
+    lead.speed_changes.push_back({t, -brake, brake_dur});
+    t += brake_dur + r.uniform(1.0, 3.0);
+    const double go = r.uniform(1.0, 2.0);
+    const double drop = std::min(brake * brake_dur, sc.ego_v0);  // cannot lose more than it had
+    lead.speed_changes.push_back({t, go, drop / go});
+    t += drop / go + r.uniform(1.0, 3.0);
   }
   lead.max_speed = sc.default_limit * 0.9;
   sc.actors.push_back(lead);
   pick_weather(sc, r);
-  finish(sc, sc.default_limit * 0.5, 30.0);
+  finish(sc, sc.ego_v0 * 0.6, 30.0);
   return sc;
 }
 
