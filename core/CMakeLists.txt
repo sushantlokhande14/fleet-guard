@@ -53,6 +53,7 @@ if(FG_BUILD_TESTS)
     tests/test_safety.cpp
     tests/test_events.cpp
     tests/test_perception.cpp
+    tests/test_planner.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
