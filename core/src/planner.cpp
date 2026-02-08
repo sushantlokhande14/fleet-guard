@@ -4,7 +4,8 @@
 
 namespace fg {
 
-Planner::Planner(const PlannerParams& p, const Scenario& sc) : p_(p), sc_(sc) {}
+Planner::Planner(const PlannerParams& p, const Scenario& sc)
+    : p_(p), sc_(sc), rng_(derive_seed(sc.seed, stream::kPlanner)) {}
 
 double Planner::free_road_target(double s, double v) const {
   // highest speed from which we can still slow to every upcoming limit
@@ -88,10 +89,44 @@ Plan Planner::compute(double t, const VehicleState& ego, const std::vector<Perce
   return plan;
 }
 
-const Plan& Planner::update(double t, const VehicleState& ego, const std::vector<PerceivedObject>& objects) {
-  if (t + 1e-9 >= next_cycle_) {
+const Plan& Planner::update(double t, const VehicleState& ego, const std::vector<PerceivedObject>& objects,
+                            std::vector<Event>& events) {
+  if (!started_) {
+    // the stack was already running when the scenario starts
     current_ = compute(t, ego, objects);
+    started_ = true;
+  }
+  if (has_pending_ && t + 1e-9 >= pending_ready_) {
+    current_ = pending_;
+    has_pending_ = false;
+  }
+  if (t + 1e-9 >= next_cycle_) {
     next_cycle_ += p_.cycle_ms / 1000.0;
+    // fixed draw order per cycle so builds share their luck
+    const double n = rng_.normal();
+    const double u_spike = rng_.uniform();
+    const double u_mag = rng_.uniform();
+    double latency = p_.latency_mean_ms + p_.latency_jitter_ms * n + p_.latency_per_object_ms * objects.size();
+    if (u_spike < p_.spike_prob) latency += p_.spike_ms * lerp(0.6, 1.4, u_mag);
+    latency = std::max(5.0, latency);
+
+    stats_.cycles++;
+    stats_.latencies_ms.push_back(latency);
+    stats_.last_latency_ms = latency;
+    const bool missed = latency > p_.cycle_ms;
+    stats_.last_missed = missed;
+    if (latency > 0.8 * p_.cycle_ms) {
+      events.push_back({t, "latency_spike", missed ? 2 : 1, latency, latency / 1000.0, missed ? "deadline_miss" : "near_budget"});
+    }
+    if (missed) {
+      stats_.deadline_misses++;
+      stats_.consecutive_misses++;
+    } else {
+      stats_.consecutive_misses = 0;
+      pending_ = compute(t, ego, objects);
+      pending_ready_ = t + latency / 1000.0;
+      has_pending_ = true;
+    }
   }
   return current_;
 }

@@ -102,7 +102,7 @@ TEST(Sim, BaselineHasNoControlEventsOnEmptyRoads) {
       DriveResult r = run_drive(sc, no_clutter);
       EXPECT_EQ(r.summary.outcome, "completed") << sc.id();
       for (const auto& e : r.events) {
-        if (e.kind == "phantom_object") continue;  // sensor clutter, not a control event
+        if (e.kind == "phantom_object" || e.kind == "latency_spike") continue;  // not control events
         ADD_FAILURE() << sc.id() << " unexpected " << e.kind << " at " << e.t;
       }
     }

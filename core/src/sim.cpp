@@ -80,7 +80,8 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
 
     const auto& objects = perception.update(t, ego, actors.states(), res.events);
     const PerceptionTickStats& ps = perception.tick_stats();
-    const Plan& plan = planner.update(t, ego, objects);
+    const Plan& plan = planner.update(t, ego, objects, res.events);
+    const PlannerStats& pst = planner.stats();
     ControlTarget tgt{&planner.active_path(), plan.lateral_offset, plan.accel, plan.v_ref(t)};
     const ControlOutput cmd = controller.update(ego, tgt);
 
@@ -103,6 +104,8 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     f.lead_gap = plan.lead_gap;
     f.gt_gap = hz.gap;
     f.ttc = hz.ttc;
+    f.planner_latency_ms = pst.last_latency_ms;
+    f.deadline_miss = pst.last_missed ? 1 : 0;
     f.n_tracks = static_cast<int>(objects.size());
     f.n_relevant = ps.relevant;
     f.n_missed = ps.missed;
@@ -126,6 +129,10 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
     // safety monitor: the safety driver takes over on imminent conflict or lane departure
     if (hz.ttc < opt.ttc_takeover && hz.gap < opt.takeover_gap_max) {
       disengage("ttc_takeover", hz.ttc, std::string(to_string(hz.kind)) + " " + std::to_string(hz.id));
+      break;
+    }
+    if (pst.consecutive_misses >= build.planner.watchdog_misses) {
+      disengage("planner_watchdog", pst.consecutive_misses, "");
       break;
     }
     if (cte > opt.lane_departure_m) {
@@ -191,6 +198,12 @@ DriveResult run_drive(const Scenario& sc, const BuildConfig& build, const SimOpt
   sum.steer_reversal_rate = steer_rev.count() / std::max(t, 1.0);
   sum.accel_reversal_rate = accel_rev.count() / std::max(t, 1.0);
   sum.hard_brakes = hard_brake.episodes();
+  const PlannerStats& pst = planner.stats();
+  sum.planner_cycles = pst.cycles;
+  sum.deadline_misses = pst.deadline_misses;
+  sum.planner_p50_ms = percentile(pst.latencies_ms, 0.50);
+  sum.planner_p99_ms = percentile(pst.latencies_ms, 0.99);
+  sum.planner_max_ms = pst.latencies_ms.empty() ? 0.0 : *std::max_element(pst.latencies_ms.begin(), pst.latencies_ms.end());
   sum.det_tp = perception.total_tp();
   sum.det_fn = perception.total_fn();
   sum.det_fp = perception.total_fp();
