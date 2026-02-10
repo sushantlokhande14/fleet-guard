@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "fleetguard/build_config.hpp"
+#include "fleetguard/compare.hpp"
 #include "fleetguard/io.hpp"
 #include "fleetguard/scenario.hpp"
 #include "fleetguard/sim.hpp"
@@ -27,6 +28,9 @@ commands:
       [--build FILE]              build config JSON (default: baseline)
       [--frames FILE]             write 10 Hz telemetry CSV
       [--events]                  include the event list in the output
+  compare --family F --seed N     drive one scenario with two builds and diff them
+          --baseline FILE --candidate FILE
+          [--frames-prefix P]     write P.baseline.csv and P.candidate.csv
 )";
 
 struct Args {
@@ -67,6 +71,41 @@ fg::BuildConfig load_build(const std::string& path) {
   return fg::build_from_json(nlohmann::json::parse(in));
 }
 
+void write_frames(const std::string& path, const std::vector<fg::Frame>& frames) {
+  std::ofstream out(path);
+  if (!out) throw std::runtime_error("cannot write " + path);
+  out << fg::frame_csv_header() << '\n';
+  for (const auto& f : frames) fg::write_frame_csv(out, f);
+}
+
+nlohmann::json drive_json(const fg::DriveResult& r, bool with_events) {
+  nlohmann::json j = fg::summary_to_json(r.summary);
+  if (with_events) {
+    j["events"] = nlohmann::json::array();
+    for (const auto& e : r.events) j["events"].push_back(fg::event_to_json(e));
+  }
+  return j;
+}
+
+int cmd_compare(const Args& a) {
+  const fg::Scenario sc = fg::make_scenario(a.need("family"), std::stoull(a.need("seed")));
+  const fg::BuildConfig base = load_build(a.need("baseline"));
+  const fg::BuildConfig cand = load_build(a.need("candidate"));
+  const fg::DriveResult rb = fg::run_drive(sc, base);
+  const fg::DriveResult rc = fg::run_drive(sc, cand);
+  if (a.has("frames-prefix")) {
+    write_frames(a.get("frames-prefix") + ".baseline.csv", rb.frames);
+    write_frames(a.get("frames-prefix") + ".candidate.csv", rc.frames);
+  }
+  nlohmann::json j;
+  j["scenario"] = sc.describe();
+  j["baseline"] = drive_json(rb, true);
+  j["candidate"] = drive_json(rc, true);
+  j["pair"] = fg::pair_to_json(fg::compare_drives(rb, rc));
+  std::cout << j.dump() << '\n';
+  return 0;
+}
+
 int cmd_run(const Args& a) {
   const fg::Scenario sc = fg::make_scenario(a.need("family"), std::stoull(a.need("seed")));
   const fg::BuildConfig build = load_build(a.get("build"));
@@ -74,18 +113,8 @@ int cmd_run(const Args& a) {
   opt.record_frames = a.has("frames");
   const fg::DriveResult r = fg::run_drive(sc, build, opt);
 
-  if (a.has("frames")) {
-    std::ofstream out(a.get("frames"));
-    if (!out) throw std::runtime_error("cannot write " + a.get("frames"));
-    out << fg::frame_csv_header() << '\n';
-    for (const auto& f : r.frames) fg::write_frame_csv(out, f);
-  }
-  nlohmann::json j = fg::summary_to_json(r.summary);
-  if (a.has("events")) {
-    j["events"] = nlohmann::json::array();
-    for (const auto& e : r.events) j["events"].push_back(fg::event_to_json(e));
-  }
-  std::cout << j.dump() << '\n';
+  if (a.has("frames")) write_frames(a.get("frames"), r.frames);
+  std::cout << drive_json(r, a.has("events")).dump() << '\n';
   return 0;
 }
 
@@ -107,6 +136,8 @@ int main(int argc, char** argv) {
       std::cout << j.dump() << '\n';
     } else if (a.command == "run") {
       return cmd_run(a);
+    } else if (a.command == "compare") {
+      return cmd_compare(a);
     } else if (a.command == "help" || a.command == "--help") {
       std::cout << kUsage;
     } else {
