@@ -29,6 +29,7 @@ add_library(fgcore STATIC
   src/safety.cpp
   src/events.cpp
   src/perception.cpp
+  src/compare.cpp
 )
 target_include_directories(fgcore PUBLIC include)
 target_link_libraries(fgcore PUBLIC nlohmann_json::nlohmann_json)
@@ -54,6 +55,7 @@ if(FG_BUILD_TESTS)
     tests/test_events.cpp
     tests/test_perception.cpp
     tests/test_planner.cpp
+    tests/test_compare.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
