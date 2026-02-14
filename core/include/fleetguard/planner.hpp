@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_map>
 #include <vector>
 
 #include "fleetguard/build_config.hpp"
@@ -71,6 +72,9 @@ class Planner {
   double next_cycle_ = 0.0;
   PlannerStats stats_;
   size_t hint_ = Path::npos;
+  // last projection segment per track: objects move little between cycles, so a
+  // narrow window around it replaces a wide search (most of the planner's cost)
+  std::unordered_map<int, size_t> track_hints_;
 };
 
 }  // namespace fg

@@ -52,8 +52,11 @@ Plan Planner::compute(double t, const VehicleState& ego, const std::vector<Perce
   }
 
   // --- react to objects in (or about to enter) our corridor ------------------
+  std::unordered_map<int, size_t> hints;
   for (const auto& o : objects) {
-    const Projection op = path.project(o.pos, pr.segment, 160);
+    auto h = track_hints_.find(o.track_id);
+    const Projection op = h != track_hints_.end() ? path.project(o.pos, h->second, 12) : path.project(o.pos, pr.segment, 160);
+    hints[o.track_id] = op.segment;
     const double ds = op.s - pr.s;
     if (ds < -2.0 || ds > 120.0) continue;
     const Vec2 tangent = Vec2::from_angle(op.heading);
@@ -85,6 +88,7 @@ Plan Planner::compute(double t, const VehicleState& ego, const std::vector<Perce
       plan.lead_gap = gap;
     }
   }
+  track_hints_.swap(hints);
   plan.accel = clamp(accel, -p_.max_decel, p_.max_accel);
   return plan;
 }
