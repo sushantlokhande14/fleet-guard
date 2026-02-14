@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "fleetguard/batch.hpp"
 #include "fleetguard/build_config.hpp"
 #include "fleetguard/compare.hpp"
 #include "fleetguard/io.hpp"
@@ -31,6 +32,12 @@ commands:
   compare --family F --seed N     drive one scenario with two builds and diff them
           --baseline FILE --candidate FILE
           [--frames-prefix P]     write P.baseline.csv and P.candidate.csv
+  batch --count N --out DIR       drive N scenarios with both builds in parallel
+        [--families a,b|all]      scenario families (default: all)
+        [--seed-start S]          first seed (default 0)
+        [--baseline FILE] [--candidate FILE]
+        [--threads T]             worker threads (default: all cores)
+        [--frames none|flagged|all] [--max-frame-pairs K] [--chunk C]
 )";
 
 struct Args {
@@ -106,6 +113,50 @@ int cmd_compare(const Args& a) {
   return 0;
 }
 
+std::vector<std::string> split(const std::string& s, char sep) {
+  std::vector<std::string> out;
+  std::string cur;
+  for (char c : s) {
+    if (c == sep) {
+      if (!cur.empty()) out.push_back(cur);
+      cur.clear();
+    } else {
+      cur += c;
+    }
+  }
+  if (!cur.empty()) out.push_back(cur);
+  return out;
+}
+
+int cmd_batch(const Args& a) {
+  fg::BatchOptions o;
+  const std::string fams = a.get("families", "all");
+  if (fams != "all") o.families = split(fams, ',');
+  o.seed_start = std::stoull(a.get("seed-start", "0"));
+  o.count = std::stoull(a.need("count"));
+  o.baseline = load_build(a.get("baseline"));
+  o.candidate = load_build(a.get("candidate"));
+  if (!a.has("candidate")) o.candidate.name = "candidate";
+  o.threads = std::stoi(a.get("threads", "0"));
+  o.out_dir = a.need("out");
+  const std::string fp = a.get("frames", "flagged");
+  if (fp == "none") o.frames = fg::FramePolicy::None;
+  else if (fp == "all") o.frames = fg::FramePolicy::All;
+  else if (fp == "flagged") o.frames = fg::FramePolicy::Flagged;
+  else throw std::invalid_argument("--frames must be none, flagged or all");
+  o.max_frame_pairs = std::stoull(a.get("max-frame-pairs", "500"));
+  o.chunk = std::max<uint64_t>(1, std::stoull(a.get("chunk", "1024")));
+  // machine-readable progress for the Python worker
+  o.progress = [](uint64_t done, uint64_t total) { std::cerr << "progress " << done << " " << total << std::endl; };
+  const fg::BatchStats st = fg::run_batch(o);
+  nlohmann::json j{{"scenarios", st.scenarios},       {"drives", st.drives},
+                   {"flagged_pairs", st.flagged_pairs}, {"frame_pairs_written", st.frame_pairs_written},
+                   {"events", st.events},             {"seconds", st.seconds},
+                   {"drives_per_second", st.seconds > 0 ? st.drives / st.seconds : 0.0}};
+  std::cout << j.dump() << '\n';
+  return 0;
+}
+
 int cmd_run(const Args& a) {
   const fg::Scenario sc = fg::make_scenario(a.need("family"), std::stoull(a.need("seed")));
   const fg::BuildConfig build = load_build(a.get("build"));
@@ -138,6 +189,8 @@ int main(int argc, char** argv) {
       return cmd_run(a);
     } else if (a.command == "compare") {
       return cmd_compare(a);
+    } else if (a.command == "batch") {
+      return cmd_batch(a);
     } else if (a.command == "help" || a.command == "--help") {
       std::cout << kUsage;
     } else {

@@ -15,6 +15,7 @@ endif()
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 find_package(nlohmann_json 3 REQUIRED)
+find_package(Threads REQUIRED)
 
 add_library(fgcore STATIC
   src/path.cpp
@@ -30,9 +31,10 @@ add_library(fgcore STATIC
   src/events.cpp
   src/perception.cpp
   src/compare.cpp
+  src/batch.cpp
 )
 target_include_directories(fgcore PUBLIC include)
-target_link_libraries(fgcore PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(fgcore PUBLIC nlohmann_json::nlohmann_json Threads::Threads)
 
 add_executable(fgsim src/main.cpp)
 target_link_libraries(fgsim PRIVATE fgcore)
@@ -56,6 +58,7 @@ if(FG_BUILD_TESTS)
     tests/test_perception.cpp
     tests/test_planner.cpp
     tests/test_compare.cpp
+    tests/test_batch.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
