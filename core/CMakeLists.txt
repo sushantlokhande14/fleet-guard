@@ -59,6 +59,7 @@ if(FG_BUILD_TESTS)
     tests/test_planner.cpp
     tests/test_compare.cpp
     tests/test_batch.cpp
+    tests/test_regression_knobs.cpp
   )
   target_link_libraries(fgcore_tests PRIVATE fgcore GTest::gtest_main)
   include(GoogleTest)
