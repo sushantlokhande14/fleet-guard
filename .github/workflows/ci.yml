@@ -8,6 +8,15 @@ on:
 jobs:
   core:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: release
+            flags: -DCMAKE_BUILD_TYPE=Release
+          - name: asan-ubsan
+            flags: -DCMAKE_BUILD_TYPE=Debug -DFG_SANITIZE=ON
+    name: core (${{ matrix.name }})
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
@@ -15,8 +24,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ninja-build nlohmann-json3-dev libgtest-dev
       - name: Configure
-        run: cmake -S core -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S core -B build -G Ninja ${{ matrix.flags }}
       - name: Build
         run: cmake --build build
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure -j 4

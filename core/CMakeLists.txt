@@ -7,12 +7,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(FG_BUILD_TESTS "Build unit tests" ON)
+option(FG_SANITIZE "Build with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
+if(FG_SANITIZE)
+  add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all)
+  add_link_options(-fsanitize=address,undefined)
+endif()
 
 find_package(nlohmann_json 3 REQUIRED)
 find_package(Threads REQUIRED)
