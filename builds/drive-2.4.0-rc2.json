@@ -1,0 +1,11 @@
+{
+  "name": "drive-2.4.0-rc2",
+  "description": "rc1 with fusion work moved off the planning thread and the steering gain reverted.",
+  "parent": "drive-2.4.0-rc1",
+  "planner": {
+    "latency_per_object_ms": 0.6
+  },
+  "control": {
+    "steer_gain": 1.0
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "drive-2.4.0-rc1",
+  "description": "New object fusion (more work per tracked object) and the CAN gateway firmware update; steering retuned on the test track.",
+  "parent": "drive-2.3.0",
+  "planner": {
+    "latency_per_object_ms": 3.2
+  },
+  "control": {
+    "steer_gain": 1.25,
+    "actuator_delay_ms": 95
+  }
+}
