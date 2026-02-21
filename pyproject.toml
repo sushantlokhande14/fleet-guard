@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fleetguard"
+version = "0.1.0"
+description = "Validation platform that replays driving scenarios across software builds and triages regressions"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.4"]
+
+[project.scripts]
+fleetguard = "fleetguard.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["fleetguard*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "fgsim: needs the fgsim binary (set FG_FGSIM or put it on PATH)",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
