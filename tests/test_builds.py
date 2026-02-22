@@ -19,7 +19,8 @@ def write(dirpath, doc):
 @pytest.fixture
 def reg(tmp_path):
     write(tmp_path, {"name": "base"})
-    write(tmp_path, {"name": "rc1", "parent": "base", "planner": {"headway_s": 1.2}, "control": {"steer_gain": 1.3}})
+    write(tmp_path, {"name": "rc1", "parent": "base",
+                     "planner": {"headway_s": 1.2}, "control": {"steer_gain": 1.3}})
     write(tmp_path, {"name": "rc2", "parent": "rc1", "control": {"steer_gain": 1.0}})
     return Registry(tmp_path, defaults=DEFAULTS)
 
@@ -31,7 +32,8 @@ def test_deep_merge_and_flatten():
 
 
 def test_overrides_follow_parent_chain(reg):
-    assert reg.overrides("rc2") == {"name": "rc2", "planner": {"headway_s": 1.2}, "control": {"steer_gain": 1.0}}
+    expected = {"name": "rc2", "planner": {"headway_s": 1.2}, "control": {"steer_gain": 1.0}}
+    assert reg.overrides("rc2") == expected
     assert reg.overrides("base") == {"name": "base"}
 
 
