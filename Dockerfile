@@ -43,8 +43,10 @@ COPY pyproject.toml README.md /app/
 COPY fleetguard /app/fleetguard
 RUN pip install --no-cache-dir /app
 COPY builds /app/builds
+COPY db /app/db
 COPY --from=core /build/fgsim /usr/local/bin/fgsim
 ENV FG_FGSIM=/usr/local/bin/fgsim \
     FG_BUILDS_DIR=/app/builds \
+    FG_MIGRATIONS_DIR=/app/db/migrations \
     FG_RUNS_DIR=/data/runs
 CMD ["fleetguard", "builds", "list"]

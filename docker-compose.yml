@@ -1,0 +1,35 @@
+name: fleetguard
+
+x-app-env: &app-env
+  FG_DATABASE_URL: postgresql://fleetguard:fleetguard@db:5432/fleetguard
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fleetguard
+      POSTGRES_PASSWORD: fleetguard
+      POSTGRES_DB: fleetguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fleetguard -d fleetguard"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      target: runtime
+    image: fleetguard:latest
+    environment: *app-env
+    command: ["sh", "-c", "fleetguard db migrate && fleetguard builds sync"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
