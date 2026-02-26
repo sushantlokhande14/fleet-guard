@@ -9,7 +9,9 @@ description = "Validation platform that replays driving scenarios across softwar
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-dependencies = []
+dependencies = [
+    "psycopg[binary]>=3.1",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.4"]
