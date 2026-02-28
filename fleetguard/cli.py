@@ -6,8 +6,8 @@ import argparse
 import json
 import sys
 
+from . import campaigns, repo
 from . import db as fgdb
-from . import repo
 from .builds import Registry
 from .sim import Fgsim
 
@@ -42,6 +42,40 @@ def cmd_db(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_campaign(c: dict) -> None:
+    pct = f"{100 * c['progress']:.0f}%"
+    rate = f"{c['drives_per_second']:.0f} drives/s" if c["drives_per_second"] else ""
+    print(f"#{c['id']:<5} {c['status']:<11} {pct:>5}  {c['candidate']} vs {c['baseline']}"
+          f"  ({c['scenario_count']} scenarios) {rate}")
+
+
+def cmd_campaign(args: argparse.Namespace) -> int:
+    if args.action == "create":
+        with fgdb.session() as conn:
+            cid = campaigns.create(conn, baseline=args.baseline, candidate=args.candidate,
+                                   scenario_count=args.count, seed_start=args.seed_start,
+                                   families=args.families.split(",") if args.families else None)
+        print(f"created campaign {cid}")
+        if args.run:
+            out = campaigns.run(cid, keep_files=args.keep_files)
+            print(json.dumps(out, indent=2))
+    elif args.action == "run":
+        out = campaigns.run(args.id, keep_files=args.keep_files)
+        print(json.dumps(out, indent=2))
+    elif args.action == "list":
+        with fgdb.session() as conn:
+            for c in campaigns.list_recent(conn):
+                _print_campaign(c)
+    elif args.action == "show":
+        with fgdb.session() as conn:
+            c = campaigns.get(conn, args.id)
+        if c is None:
+            print(f"no campaign {args.id}", file=sys.stderr)
+            return 1
+        _print_campaign(c)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="fleetguard", description="Fleet Guard validation platform")
     sub = p.add_subparsers(dest="command", required=True)
@@ -54,6 +88,24 @@ def build_parser() -> argparse.ArgumentParser:
     d = sub.add_parser("db", help="database maintenance")
     d.add_argument("action", choices=["migrate"])
     d.set_defaults(func=cmd_db)
+
+    c = sub.add_parser("campaign", help="create and run validation campaigns")
+    csub = c.add_subparsers(dest="action", required=True)
+    cc = csub.add_parser("create")
+    cc.add_argument("--baseline", required=True)
+    cc.add_argument("--candidate", required=True)
+    cc.add_argument("--count", type=int, required=True, help="scenarios (each is driven by both builds)")
+    cc.add_argument("--families", help="comma separated (default: all)")
+    cc.add_argument("--seed-start", type=int, default=0)
+    cc.add_argument("--run", action="store_true", help="run it now instead of leaving it for the worker")
+    cc.add_argument("--keep-files", action="store_true")
+    cr = csub.add_parser("run")
+    cr.add_argument("id", type=int)
+    cr.add_argument("--keep-files", action="store_true")
+    csub.add_parser("list")
+    cs = csub.add_parser("show")
+    cs.add_argument("id", type=int)
+    c.set_defaults(func=cmd_campaign)
     return p
 
 
