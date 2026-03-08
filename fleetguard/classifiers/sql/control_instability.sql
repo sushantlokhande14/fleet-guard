@@ -1,6 +1,7 @@
 -- control_instability: steering or speed control rings where the baseline was
--- calm: more direction reversals per second, new oscillation episodes, or a
--- clearly higher jerk.
+-- calm: clearly more direction reversals per second, repeated new oscillation
+-- episodes (a single one must come with more reversals: car following on the
+-- highway sits close to the detector threshold), or a clearly higher jerk.
 WITH osc AS (
     SELECT scenario_id, min(t) AS first_t, count(*) AS n,
            array_agg(DISTINCT kind) AS kinds
@@ -28,5 +29,6 @@ LEFT JOIN osc o ON o.scenario_id = pd.scenario_id
 WHERE pd.campaign_id = %(campaign)s
   AND (pd.d_steer_reversal_rate >= %(ctrl_steer_rev_delta)s
        OR pd.d_accel_reversal_rate >= %(ctrl_accel_rev_delta)s
-       OR o.n > 0
+       OR o.n >= 2
+       OR (o.n = 1 AND greatest(pd.d_steer_reversal_rate, pd.d_accel_reversal_rate) >= %(ctrl_rev_with_event)s)
        OR (pd.d_jerk_rms >= %(ctrl_jerk_delta)s AND pd.cand_jerk >= 1.5 * pd.base_jerk))

@@ -28,13 +28,15 @@ THRESHOLDS: dict[str, float] = {
     "latency_min_new_misses": 2,
     "latency_p99_floor_ms": 70.0,
     "latency_p99_delta_ms": 12.0,
+    "latency_min_new_events": 2,
     "route_cte_floor_m": 0.45,
     "route_cte_delta_m": 0.25,
     "route_lat_diff_m": 0.4,
     "perc_recall_drop": 0.03,
     "perc_precision_drop": 0.05,
     "ctrl_steer_rev_delta": 0.15,
-    "ctrl_accel_rev_delta": 0.15,
+    "ctrl_accel_rev_delta": 0.25,
+    "ctrl_rev_with_event": 0.08,
     "ctrl_jerk_delta": 0.6,
 }
 

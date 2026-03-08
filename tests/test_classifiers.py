@@ -1,3 +1,9 @@
+import collections
+
+import pytest
+
+from fleetguard import campaigns, classifiers, repo
+from fleetguard.builds import Registry
 from fleetguard.classifiers import Failure, Signal, attribute, signature
 
 
@@ -63,3 +69,47 @@ def test_signatures():
     assert signature(fail("control_instability", axes=["steer_oscillation", "accel_oscillation"]),
                      "f").endswith("/accel+steer")
 
+
+# --- end to end against the simulator ----------------------------------------------
+
+KNOBS = {
+    "clean": {},
+    "bias": {"planner": {"lateral_bias_m": 0.5}},
+    "spikes": {"planner": {"spike_prob": 0.05}},
+    "peds": {"perception": {"ped_far_miss_add": 0.95, "ped_far_range_m": 20}},
+    "steer": {"control": {"steer_gain": 1.7, "actuator_delay_ms": 120}},
+}
+
+
+@pytest.fixture
+def classified(db, db_url, fgsim, tmp_path):
+    repo.sync_builds(db, Registry(defaults=fgsim.defaults()))
+    out = {}
+    for name, knob in KNOBS.items():
+        repo.upsert_build(db, f"k-{name}", {"name": f"k-{name}", **knob}, {})
+        cid = campaigns.create(db, baseline="drive-2.3.0", candidate=f"k-{name}", scenario_count=70)
+        db.commit()
+        campaigns.run(cid, url=db_url, sim=fgsim, threads=4, runs_dir=tmp_path)
+        out[name] = classifiers.classify_campaign(db, cid)
+        db.commit()
+    return out
+
+
+@pytest.mark.fgsim
+def test_knobs_land_in_their_category(classified):
+    assert classified["clean"] == []
+    top = {name: collections.Counter(f.category for f in fails).most_common(1)[0][0]
+           for name, fails in classified.items() if fails}
+    assert top == {"bias": "route_deviation", "spikes": "latency_spike", "peds": "perception_error",
+                   "steer": "control_instability"}
+
+
+@pytest.mark.fgsim
+def test_failures_are_stored_once_per_scenario(db, classified):
+    rows = db.execute("SELECT campaign_id, scenario_id, count(*) AS n FROM failures "
+                      "GROUP BY 1, 2 HAVING count(*) > 1").fetchall()
+    assert rows == []
+    r = db.execute("SELECT * FROM failures WHERE category = 'perception_error' LIMIT 1").fetchone()
+    assert r["classifier_version"] == classifiers.CLASSIFIER_VERSION
+    assert r["signature"].startswith("perception_error/")
+    assert "recall" in r["evidence"]
