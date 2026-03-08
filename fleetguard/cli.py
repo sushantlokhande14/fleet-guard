@@ -9,6 +9,7 @@ import sys
 from . import campaigns, repo
 from . import db as fgdb
 from .builds import Registry
+from .pipeline import post_process
 from .sim import Fgsim
 
 
@@ -57,22 +58,39 @@ def cmd_campaign(args: argparse.Namespace) -> int:
                                    families=args.families.split(",") if args.families else None)
         print(f"created campaign {cid}")
         if args.run:
-            out = campaigns.run(cid, keep_files=args.keep_files)
-            print(json.dumps(out, indent=2))
+            campaigns.run(cid, keep_files=args.keep_files, after_ingest=post_process)
+            _print_verdict(cid)
     elif args.action == "run":
-        out = campaigns.run(args.id, keep_files=args.keep_files)
-        print(json.dumps(out, indent=2))
+        campaigns.run(args.id, keep_files=args.keep_files, after_ingest=post_process)
+        _print_verdict(args.id)
     elif args.action == "list":
         with fgdb.session() as conn:
             for c in campaigns.list_recent(conn):
                 _print_campaign(c)
     elif args.action == "show":
-        with fgdb.session() as conn:
-            c = campaigns.get(conn, args.id)
-        if c is None:
-            print(f"no campaign {args.id}", file=sys.stderr)
-            return 1
-        _print_campaign(c)
+        return _print_verdict(args.id)
+    return 0
+
+
+def _print_verdict(campaign_id: int) -> int:
+    with fgdb.session() as conn:
+        c = campaigns.get(conn, campaign_id)
+    if c is None:
+        print(f"no campaign {campaign_id}", file=sys.stderr)
+        return 1
+    _print_campaign(c)
+    v = c["verdict"]
+    if not v:
+        return 0
+    print(f"verdict: {v['status'].upper()}  ({v['failures']} failing scenarios of {v['scenarios']})")
+    for cat, row in v["categories"].items():
+        mark = "!!" if row["flagged"] else "  "
+        rate = f"({row['per_1000']:.1f} per 1000, {row['critical']} critical)"
+        print(f"  {mark} {cat:20s} {row['failures']:5d}  {rate}")
+    if v["top_clusters"]:
+        print("  top clusters:")
+        for cl in v["top_clusters"][:5]:
+            print(f"     {cl['n']:4d}  {cl['signature']}")
     return 0
 
 
