@@ -6,9 +6,10 @@ import argparse
 import json
 import sys
 
-from . import campaigns, repo
+from . import benchmark, campaigns, repo, repro
 from . import db as fgdb
 from .builds import Registry
+from .config import get_settings
 from .pipeline import post_process
 from .sim import Fgsim
 
@@ -94,6 +95,33 @@ def _print_verdict(campaign_id: int) -> int:
     return 0
 
 
+def cmd_benchmark(args: argparse.Namespace) -> int:
+    def show(r: dict) -> None:
+        if r["category"] == "clean":
+            verdict = "pass" if r["passed"] else "FALSE POSITIVE " + ",".join(r["flagged"])
+        else:
+            verdict = "reproduced" if r["reproduced"] else f"MISSED (flagged: {','.join(r['flagged']) or '-'})"
+        print(f"{r['case']:45s} {verdict}", flush=True)
+
+    result = benchmark.run(get_settings().database_url, scenario_count=args.count, case_filter=args.cases,
+                           on_case=show)
+    benchmark.write(result, args.out)
+    s = result["summary"]
+    print(f"\nreproduced {s['reproduced']['hit']}/{s['reproduced']['n']}"
+          f" ({100 * s['reproduced']['rate']:.1f}%), top-1 {s['top1']['hit']}/{s['top1']['n']},"
+          f" control false positives {s['controls']['false_positives']}/{s['controls']['n']}")
+    print(f"wrote {args.out}/benchmark.md")
+    return 0
+
+
+def cmd_repro(args: argparse.Namespace) -> int:
+    with fgdb.session() as conn:
+        r = repro.verify(conn, args.failure_id)
+    print(r["command"])
+    print("reproduced" if r["reproduced"] else "NOT reproduced:\n  " + "\n  ".join(r["mismatches"]))
+    return 0 if r["reproduced"] else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="fleetguard", description="Fleet Guard validation platform")
     sub = p.add_subparsers(dest="command", required=True)
@@ -124,6 +152,16 @@ def build_parser() -> argparse.ArgumentParser:
     cs = csub.add_parser("show")
     cs.add_argument("id", type=int)
     c.set_defaults(func=cmd_campaign)
+
+    bm = sub.add_parser("benchmark", help="run the seeded-regression benchmark")
+    bm.add_argument("--count", type=int, default=700, help="scenarios per case")
+    bm.add_argument("--cases", default="", help="only cases whose id starts with this")
+    bm.add_argument("--out", default="docs/benchmark")
+    bm.set_defaults(func=cmd_benchmark)
+
+    rp = sub.add_parser("repro", help="replay a failure and check it matches what was stored")
+    rp.add_argument("failure_id", type=int)
+    rp.set_defaults(func=cmd_repro)
     return p
 
 
