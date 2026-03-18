@@ -2,7 +2,7 @@
 -- calm: clearly more direction reversals per second, repeated new oscillation
 -- episodes (a single one must come with more reversals: car following on the
 -- highway sits close to the detector threshold), or a clearly higher jerk.
-WITH osc AS (
+WITH osc AS MATERIALIZED (
     SELECT scenario_id, min(t) AS first_t, count(*) AS n,
            array_agg(DISTINCT kind) AS kinds
     FROM new_candidate_events

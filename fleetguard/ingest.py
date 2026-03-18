@@ -133,4 +133,10 @@ def ingest_batch(conn: psycopg.Connection, campaign_id: int, out_dir: str | Path
                 (campaign_id,),
             )
             counts["frames"] = cur.rowcount
+
+        # Fresh statistics. Without them the planner still thinks this campaign
+        # has no rows and picks nested loops that re-run the classifiers' event
+        # aggregates once per pair (12.6 s instead of 48 ms on a 700-pair campaign).
+        for table in ("scenarios", "drives", "drive_events", "pairs", "telemetry_frames"):
+            cur.execute(f"ANALYZE {table}")
     return counts

@@ -3,7 +3,7 @@
 -- counts when both drives ran to completion or new near-budget cycles back it
 -- up: over a few hundred cycles p99 is about the third-worst cycle, so a drive
 -- that ends early can move it without anything being slower.
-WITH spikes AS (
+WITH spikes AS MATERIALIZED (
     SELECT scenario_id, min(t) AS first_t, count(*) AS n, max(value) AS worst_ms
     FROM new_candidate_events
     WHERE campaign_id = %(campaign)s AND kind = 'latency_spike'

@@ -1,6 +1,6 @@
 -- perception_error: the candidate's tracker finds fewer of the real objects in
 -- front of it, or reports more phantoms, than the baseline's on the same drive.
-WITH misses AS (
+WITH misses AS MATERIALIZED (
     SELECT scenario_id, min(t) AS first_t, count(*) AS n,
            jsonb_agg(jsonb_build_object('t', round(t::numeric, 1), 'object', detail,
                                         'range_m', round(value::numeric, 1)) ORDER BY t) AS items
@@ -8,7 +8,7 @@ WITH misses AS (
     WHERE campaign_id = %(campaign)s AND kind = 'perception_miss'
     GROUP BY scenario_id
 ),
-phantoms AS (
+phantoms AS MATERIALIZED (
     SELECT scenario_id, min(t) AS first_t, count(*) AS n
     FROM new_candidate_events
     WHERE campaign_id = %(campaign)s AND kind = 'phantom_object'

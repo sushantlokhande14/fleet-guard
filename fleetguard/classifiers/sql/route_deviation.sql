@@ -1,6 +1,6 @@
 -- route_deviation: the candidate ends up further from the lane centre than the
 -- baseline did on the same road (or leaves the lane where the baseline stayed in).
-WITH off AS (
+WITH off AS MATERIALIZED (
     SELECT scenario_id, min(t) AS first_t, count(*) AS n, max(value) AS worst_m
     FROM new_candidate_events
     WHERE campaign_id = %(campaign)s AND kind = 'off_route'
