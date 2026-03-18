@@ -122,6 +122,12 @@ def cmd_repro(args: argparse.Namespace) -> int:
     return 0 if r["reproduced"] else 1
 
 
+def cmd_worker(args: argparse.Namespace) -> int:
+    from . import worker
+
+    return worker.main(once=args.once, poll_s=args.poll)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="fleetguard", description="Fleet Guard validation platform")
     sub = p.add_subparsers(dest="command", required=True)
@@ -162,6 +168,11 @@ def build_parser() -> argparse.ArgumentParser:
     rp = sub.add_parser("repro", help="replay a failure and check it matches what was stored")
     rp.add_argument("failure_id", type=int)
     rp.set_defaults(func=cmd_repro)
+
+    wk = sub.add_parser("worker", help="run queued campaigns")
+    wk.add_argument("--once", action="store_true", help="drain the queue and exit")
+    wk.add_argument("--poll", type=float, default=2.0, help="seconds between queue polls")
+    wk.set_defaults(func=cmd_worker)
     return p
 
 
