@@ -1,7 +1,15 @@
 name: fleetguard
 
-x-app-env: &app-env
-  FG_DATABASE_URL: postgresql://fleetguard:fleetguard@db:5432/fleetguard
+x-app: &app
+  build:
+    context: .
+    target: runtime
+  image: fleetguard:latest
+  environment:
+    FG_DATABASE_URL: postgresql://fleetguard:fleetguard@db:5432/fleetguard
+  depends_on:
+    db:
+      condition: service_healthy
 
 services:
   db:
@@ -21,15 +29,41 @@ services:
       retries: 20
 
   migrate:
-    build:
-      context: .
-      target: runtime
-    image: fleetguard:latest
-    environment: *app-env
+    <<: *app
     command: ["sh", "-c", "fleetguard db migrate && fleetguard builds sync"]
+    restart: "no"
+
+  worker:
+    <<: *app
+    command: ["fleetguard", "worker", "--metrics-port", "9101"]
+    restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  exporter:
+    <<: *app
+    command: ["fleetguard", "exporter", "--port", "9102"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    volumes:
+      - ./deploy/prometheus:/etc/prometheus:ro
+      - promdata:/prometheus
+    ports:
+      - "9090:9090"
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    volumes:
+      - ./deploy/alertmanager:/etc/alertmanager:ro
+    ports:
+      - "9093:9093"
 
 volumes:
   pgdata:
+  promdata:

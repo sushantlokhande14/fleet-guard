@@ -1,0 +1,15 @@
+route:
+  receiver: triage
+  group_by: [alertname, candidate]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 4h
+  routes:
+    - matchers: [severity="critical"]
+      receiver: triage
+      repeat_interval: 1h
+
+receivers:
+  # Wired to the triage API's webhook once it exists; until then alerts are
+  # visible in the Alertmanager UI on :9093.
+  - name: triage
