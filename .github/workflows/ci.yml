@@ -66,3 +66,16 @@ jobs:
           FG_FGSIM: build/fgsim
           FG_TEST_DATABASE_URL: postgresql://fleetguard:fleetguard@localhost:5432/fleetguard_test
         run: pytest -q
+
+  monitoring:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Prometheus config and alert rules
+        run: |
+          docker run --rm -v "$PWD/deploy/prometheus:/etc/prometheus" --entrypoint promtool \
+            prom/prometheus:v2.53.1 check config /etc/prometheus/prometheus.yml
+      - name: Alert rule unit tests
+        run: |
+          docker run --rm -v "$PWD/deploy/prometheus:/p" -w /p --entrypoint promtool \
+            prom/prometheus:v2.53.1 test rules alerts_test.yml

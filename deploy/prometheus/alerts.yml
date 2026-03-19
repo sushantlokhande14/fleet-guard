@@ -1,0 +1,84 @@
+groups:
+  # Regressions found by validation campaigns. Each series is labelled with the
+  # campaign, so an alert points straight at the campaign to triage.
+  - name: fleetguard.regressions
+    rules:
+      - alert: CandidateRegression
+        expr: fleetguard_campaign_regression == 1
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.candidate }} regressed against {{ $labels.baseline }}"
+          description: "Campaign {{ $labels.campaign }} flagged at least one failure category. Triage it before promoting the build."
+
+      - alert: DisengagementRateRegression
+        expr: |
+          fleetguard_build_disengagements_per_1000km{role="candidate"}
+            > ignoring(build, role)
+          (1.5 * fleetguard_build_disengagements_per_1000km{role="baseline"} + 2)
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.candidate }}: disengagements up to {{ $value | printf \"%.1f\" }} per 1000 km"
+          description: "More than 1.5x the baseline rate (+2) in campaign {{ $labels.campaign }}."
+
+      - alert: PlannerLatencyBudget
+        expr: fleetguard_build_planner_p99_ms{role="candidate"} > 90
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.candidate }}: planner p99 at {{ $value | printf \"%.0f\" }} ms of a 100 ms budget"
+          description: "99th percentile over drives of per-drive planner p99 latency, campaign {{ $labels.campaign }}."
+
+      - alert: PerceptionRecallDrop
+        expr: |
+          fleetguard_build_perception_recall{role="candidate"}
+            < ignoring(build, role)
+          (fleetguard_build_perception_recall{role="baseline"} - 0.01)
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.candidate }}: perception recall down to {{ $value | printf \"%.3f\" }}"
+          description: "More than one point below the baseline in campaign {{ $labels.campaign }}."
+
+  # Health of the platform itself.
+  - name: fleetguard.platform
+    rules:
+      - alert: WorkerDown
+        expr: up{job="worker"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Campaign worker {{ $labels.instance }} is not responding"
+
+      - alert: FleetDatabaseUnreachable
+        expr: fleetguard_db_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The metrics exporter cannot read Postgres"
+
+      - alert: CampaignStalled
+        expr: fleetguard_campaign_progress < 1 and changes(fleetguard_campaign_progress[10m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Campaign {{ $labels.campaign }} ({{ $labels.candidate }}) has not progressed in 20 minutes"
+
+      - alert: CampaignQueueBacklog
+        expr: fleetguard_campaigns{status="queued"} > 5
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value }} campaigns waiting; add a worker"
+
+      - alert: CampaignsFailing
+        expr: increase(fleetguard_worker_campaigns_total{status="failed"}[30m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "A campaign failed to run in the last 30 minutes (see campaigns.error)"

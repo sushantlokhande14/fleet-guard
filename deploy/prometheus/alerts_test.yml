@@ -1,0 +1,82 @@
+# promtool test rules deploy/prometheus/alerts_test.yml
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'fleetguard_campaign_regression{campaign="7",candidate="rc1",baseline="v2"}'
+        values: "1x5"
+      - series: 'fleetguard_campaign_regression{campaign="8",candidate="rc2",baseline="v2"}'
+        values: "0x5"
+      - series: 'fleetguard_build_disengagements_per_1000km{campaign="7",candidate="rc1",build="v2",role="baseline"}'
+        values: "4x5"
+      - series: 'fleetguard_build_disengagements_per_1000km{campaign="7",candidate="rc1",build="rc1",role="candidate"}'
+        values: "9x5"
+      - series: 'fleetguard_build_perception_recall{campaign="7",candidate="rc1",build="v2",role="baseline"}'
+        values: "0.990x5"
+      - series: 'fleetguard_build_perception_recall{campaign="7",candidate="rc1",build="rc1",role="candidate"}'
+        values: "0.985x5"
+      - series: 'fleetguard_build_planner_p99_ms{campaign="7",candidate="rc1",build="rc1",role="candidate"}'
+        values: "95x5"
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: CandidateRegression
+        exp_alerts:
+          - exp_labels: {severity: warning, campaign: "7", candidate: rc1, baseline: v2}
+            exp_annotations:
+              summary: "rc1 regressed against v2"
+              description: "Campaign 7 flagged at least one failure category. Triage it before promoting the build."
+      # 9 > 1.5 * 4 + 2 = 8
+      - eval_time: 2m
+        alertname: DisengagementRateRegression
+        exp_alerts:
+          - exp_labels: {severity: critical, campaign: "7", candidate: rc1}
+            exp_annotations:
+              summary: "rc1: disengagements up to 9.0 per 1000 km"
+              description: "More than 1.5x the baseline rate (+2) in campaign 7."
+      # half a point below baseline is noise
+      - eval_time: 2m
+        alertname: PerceptionRecallDrop
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: PlannerLatencyBudget
+        exp_alerts:
+          - exp_labels: {severity: warning, campaign: "7", candidate: rc1, build: rc1, role: candidate}
+            exp_annotations:
+              summary: "rc1: planner p99 at 95 ms of a 100 ms budget"
+              description: "99th percentile over drives of per-drive planner p99 latency, campaign 7."
+
+  - interval: 1m
+    input_series:
+      - series: 'up{job="worker",instance="worker:9101"}'
+        values: "1 1 0 0 0 0"
+      - series: 'fleetguard_campaign_progress{campaign="3",candidate="rc1"}'
+        values: "0.4x30"
+      - series: 'fleetguard_campaigns{status="queued"}'
+        values: "8x20"
+    alert_rule_test:
+      # down since 2m: pending until it has been down for the full minute
+      - eval_time: 2m
+        alertname: WorkerDown
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: WorkerDown
+        exp_alerts:
+          - exp_labels: {severity: critical, job: worker, instance: "worker:9101"}
+            exp_annotations:
+              summary: "Campaign worker worker:9101 is not responding"
+      - eval_time: 25m
+        alertname: CampaignStalled
+        exp_alerts:
+          - exp_labels: {severity: warning, campaign: "3", candidate: rc1}
+            exp_annotations:
+              summary: "Campaign 3 (rc1) has not progressed in 20 minutes"
+      - eval_time: 16m
+        alertname: CampaignQueueBacklog
+        exp_alerts:
+          - exp_labels: {severity: warning, status: queued}
+            exp_annotations:
+              summary: "8 campaigns waiting; add a worker"
