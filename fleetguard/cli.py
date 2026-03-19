@@ -125,7 +125,20 @@ def cmd_repro(args: argparse.Namespace) -> int:
 def cmd_worker(args: argparse.Namespace) -> int:
     from . import worker
 
-    return worker.main(once=args.once, poll_s=args.poll)
+    return worker.main(once=args.once, poll_s=args.poll, metrics_port=args.metrics_port)
+
+
+def cmd_exporter(args: argparse.Namespace) -> int:
+    import threading
+
+    from prometheus_client import start_http_server
+
+    from .metrics import fleet_registry
+
+    start_http_server(args.port, registry=fleet_registry())
+    print(f"fleet metrics on :{args.port}/metrics", flush=True)
+    threading.Event().wait()
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -172,7 +185,12 @@ def build_parser() -> argparse.ArgumentParser:
     wk = sub.add_parser("worker", help="run queued campaigns")
     wk.add_argument("--once", action="store_true", help="drain the queue and exit")
     wk.add_argument("--poll", type=float, default=2.0, help="seconds between queue polls")
+    wk.add_argument("--metrics-port", type=int, default=0, help="serve worker metrics on this port")
     wk.set_defaults(func=cmd_worker)
+
+    ex = sub.add_parser("exporter", help="serve fleet KPIs from the database as Prometheus metrics")
+    ex.add_argument("--port", type=int, default=9102)
+    ex.set_defaults(func=cmd_exporter)
     return p
 
 

@@ -2,7 +2,7 @@ import threading
 
 import pytest
 
-from fleetguard import campaigns, repo, worker
+from fleetguard import campaigns, metrics, repo, worker
 from fleetguard import db as fgdb
 from fleetguard.builds import Registry
 
@@ -35,8 +35,11 @@ def test_claims_are_exclusive(db_url, queued):
 def test_worker_drains_the_queue(db, db_url, fgsim, queued, tmp_path, monkeypatch):
     monkeypatch.setenv("FG_RUNS_DIR", str(tmp_path))
     w = worker.Worker(url=db_url, sim=fgsim, poll_s=0.05)
+    before = metrics.DRIVES_SIMULATED._value.get()
     done = [w.run_one() for _ in range(4)]
     assert done == [*queued, None]
+    assert metrics.DRIVES_SIMULATED._value.get() - before == 3 * 28
+    assert metrics.BUSY._value.get() == 0
     rows = db.execute("SELECT status, verdict FROM campaigns ORDER BY id").fetchall()
     assert all(r["status"] == "done" and r["verdict"] is not None for r in rows)
 

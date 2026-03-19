@@ -13,8 +13,9 @@ import threading
 import time
 
 import psycopg
+from prometheus_client import start_http_server
 
-from . import campaigns
+from . import campaigns, metrics
 from . import db as fgdb
 from .config import get_settings
 from .pipeline import post_process
@@ -56,12 +57,22 @@ class Worker:
         if cid is None:
             return None
         log.info("campaign %s: starting", cid)
+        metrics.BUSY.set(1)
+        t0 = time.monotonic()
         try:
-            campaigns.run(cid, url=self.url, sim=self.sim, after_ingest=post_process)
+            out = campaigns.run(cid, url=self.url, sim=self.sim, after_ingest=post_process)
+            metrics.CAMPAIGNS_RUN.labels("done").inc()
+            metrics.DRIVES_SIMULATED.inc(out["sim"]["drives"])
+            metrics.SIM_RATE.set(out["sim"]["drives_per_second"])
+            metrics.LAST_SUCCESS.set_to_current_time()
             log.info("campaign %s: done", cid)
         except Exception:
             # campaigns.run already recorded status=failed and the error text
+            metrics.CAMPAIGNS_RUN.labels("failed").inc()
             log.exception("campaign %s: failed", cid)
+        finally:
+            metrics.CAMPAIGN_SECONDS.observe(time.monotonic() - t0)
+            metrics.BUSY.set(0)
         return cid
 
     def loop(self) -> None:
@@ -79,8 +90,11 @@ class Worker:
             signal.signal(sig, lambda *_: self.stop.set())
 
 
-def main(once: bool = False, poll_s: float = 2.0) -> int:
+def main(once: bool = False, poll_s: float = 2.0, metrics_port: int = 0) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    if metrics_port:
+        start_http_server(metrics_port, registry=metrics.WORKER_REGISTRY)
+        log.info("worker metrics on :%d/metrics", metrics_port)
     w = Worker(poll_s=poll_s)
     with fgdb.session(w.url) as conn:
         fgdb.migrate(conn)
