@@ -1,0 +1,642 @@
+{
+  "uid": "fleetguard-failure",
+  "title": "Fleet Guard / Failure telemetry",
+  "tags": [
+    "fleetguard"
+  ],
+  "description": "10 Hz telemetry of one failing scenario, baseline against candidate on the same clock.",
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Failure",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fleetdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fleetdb"
+          },
+          "rawSql": "SELECT f.scenario_id, f.category, f.signature, f.severity, round(f.first_t::numeric, 1) AS \"first at (s)\",\n               array_to_string(f.secondary, ', ') AS also, f.evidence::text AS evidence\n          FROM failures f WHERE f.id = $failure",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "trend",
+      "title": "Speed",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fleetdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fleetdb"
+          },
+          "rawSql": "SELECT t.t AS \"time (s)\",\n               max(t.v) FILTER (WHERE d.role = 'baseline')  AS baseline,\n               max(t.v) FILTER (WHERE d.role = 'candidate') AS candidate\n          FROM failures f\n          JOIN pairs p ON p.campaign_id = f.campaign_id AND p.scenario_id = f.scenario_id\n          JOIN drives d ON d.id IN (p.baseline_drive, p.candidate_drive)\n          JOIN telemetry_frames t ON t.drive_id = d.id\n         WHERE f.id = $failure\n         GROUP BY t.t ORDER BY t.t",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "velocityms",
+          "custom": {
+            "lineWidth": 2,
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "time (s)"
+      }
+    },
+    {
+      "id": 3,
+      "type": "trend",
+      "title": "Cross-track error",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fleetdb"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fleetdb"
+          },
+          "rawSql": "SELECT t.t AS \"time (s)\",\n               max(t.cte) FILTER (WHERE d.role = 'baseline')  AS baseline,\n               max(t.cte) FILTER (WHERE d.role = 'candidate') AS candidate\n          FROM failures f\n          JOIN pairs p ON p.campaign_id = f.campaign_id AND p.scenario_id = f.scenario_id\n          JOIN drives d ON d.id IN (p.baseline_drive, p.candidate_drive)\n          JOIN telemetry_frames t ON t.drive_id = d.id\n         WHERE f.id = $failure\n         GROUP BY t.t ORDER BY t.t",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthm",
+          "custom": {
+            "lineWidth": 2,
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "time (s)"
+      }
+    },
+    {
+      "id": 4,
+      "type": "trend",
+      "title": "Road-wheel angle",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fleetdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fleetdb"
+          },
+          "rawSql": "SELECT t.t AS \"time (s)\",\n               max(t.steer) FILTER (WHERE d.role = 'baseline')  AS baseline,\n               max(t.steer) FILTER (WHERE d.role = 'candidate') AS candidate\n          FROM failures f\n          JOIN pairs p ON p.campaign_id = f.campaign_id AND p.scenario_id = f.scenario_id\n          JOIN drives d ON d.id IN (p.baseline_drive, p.candidate_drive)\n          JOIN telemetry_frames t ON t.drive_id = d.id\n         WHERE f.id = $failure\n         GROUP BY t.t ORDER BY t.t",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "radian",
+          "custom": {
+            "lineWidth": 2,
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "time (s)"
+      }
+    },
+    {
+      "id": 5,
+      "type": "trend",
+      "title": "Acceleration",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fleetdb"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fleetdb"
+          },
+          "rawSql": "SELECT t.t AS \"time (s)\",\n               max(t.a) FILTER (WHERE d.role = 'baseline')  AS baseline,\n               max(t.a) FILTER (WHERE d.role = 'candidate') AS candidate\n          FROM failures f\n          JOIN pairs p ON p.campaign_id = f.campaign_id AND p.scenario_id = f.scenario_id\n          JOIN drives d ON d.id IN (p.baseline_drive, p.candidate_drive)\n          JOIN telemetry_frames t ON t.drive_id = d.id\n         WHERE f.id = $failure\n         GROUP BY t.t ORDER BY t.t",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "accMS2",
+          "custom": {
+            "lineWidth": 2,
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "time (s)"
+      }
+    },
+    {
+      "id": 6,
+      "type": "trend",
+      "title": "Planner cycle latency",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fleetdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fleetdb"
+          },
+          "rawSql": "SELECT t.t AS \"time (s)\",\n               max(t.planner_latency_ms) FILTER (WHERE d.role = 'baseline')  AS baseline,\n               max(t.planner_latency_ms) FILTER (WHERE d.role = 'candidate') AS candidate\n          FROM failures f\n          JOIN pairs p ON p.campaign_id = f.campaign_id AND p.scenario_id = f.scenario_id\n          JOIN drives d ON d.id IN (p.baseline_drive, p.candidate_drive)\n          JOIN telemetry_frames t ON t.drive_id = d.id\n         WHERE f.id = $failure\n         GROUP BY t.t ORDER BY t.t",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "time (s)"
+      }
+    },
+    {
+      "id": 7,
+      "type": "trend",
+      "title": "True gap to object ahead",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fleetdb"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fleetdb"
+          },
+          "rawSql": "SELECT t.t AS \"time (s)\",\n               max(t.gt_gap) FILTER (WHERE d.role = 'baseline')  AS baseline,\n               max(t.gt_gap) FILTER (WHERE d.role = 'candidate') AS candidate\n          FROM failures f\n          JOIN pairs p ON p.campaign_id = f.campaign_id AND p.scenario_id = f.scenario_id\n          JOIN drives d ON d.id IN (p.baseline_drive, p.candidate_drive)\n          JOIN telemetry_frames t ON t.drive_id = d.id\n         WHERE f.id = $failure\n         GROUP BY t.t ORDER BY t.t",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthm",
+          "custom": {
+            "lineWidth": 2,
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "time (s)"
+      }
+    },
+    {
+      "id": 8,
+      "type": "trend",
+      "title": "Relevant objects without a track",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fleetdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fleetdb"
+          },
+          "rawSql": "SELECT t.t AS \"time (s)\",\n               max(t.n_missed) FILTER (WHERE d.role = 'baseline')  AS baseline,\n               max(t.n_missed) FILTER (WHERE d.role = 'candidate') AS candidate\n          FROM failures f\n          JOIN pairs p ON p.campaign_id = f.campaign_id AND p.scenario_id = f.scenario_id\n          JOIN drives d ON d.id IN (p.baseline_drive, p.candidate_drive)\n          JOIN telemetry_frames t ON t.drive_id = d.id\n         WHERE f.id = $failure\n         GROUP BY t.t ORDER BY t.t",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "lineWidth": 2,
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "time (s)"
+      }
+    },
+    {
+      "id": 9,
+      "type": "trend",
+      "title": "Time to collision",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fleetdb"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fleetdb"
+          },
+          "rawSql": "SELECT t.t AS \"time (s)\",\n               max(t.ttc) FILTER (WHERE d.role = 'baseline')  AS baseline,\n               max(t.ttc) FILTER (WHERE d.role = 'candidate') AS candidate\n          FROM failures f\n          JOIN pairs p ON p.campaign_id = f.campaign_id AND p.scenario_id = f.scenario_id\n          JOIN drives d ON d.id IN (p.baseline_drive, p.candidate_drive)\n          JOIN telemetry_frames t ON t.drive_id = d.id\n         WHERE f.id = $failure\n         GROUP BY t.t ORDER BY t.t",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 2,
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "candidate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "xField": "time (s)"
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "campaign",
+        "label": "Campaign",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "fleetdb"
+        },
+        "query": "SELECT id AS __value, '#' || id || '  ' || name AS __text FROM campaigns WHERE status = 'done' ORDER BY id DESC",
+        "refresh": 1,
+        "sort": 0,
+        "includeAll": false,
+        "multi": false
+      },
+      {
+        "name": "failure",
+        "label": "Failure",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "fleetdb"
+        },
+        "query": "SELECT f.id AS __value, f.scenario_id || '  ' || f.category AS __text FROM failures f JOIN pairs p ON p.campaign_id = f.campaign_id AND p.scenario_id = f.scenario_id WHERE f.campaign_id = $campaign AND EXISTS (SELECT 1 FROM telemetry_frames t WHERE t.drive_id = p.candidate_drive) ORDER BY f.severity DESC, f.score DESC",
+        "refresh": 1,
+        "sort": 0,
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  }
+}
