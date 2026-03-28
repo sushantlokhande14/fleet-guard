@@ -80,3 +80,44 @@ def test_create_validation(client):
                                                    "scenario_count": 10**7})
     assert too_many.status_code == 422
     assert client.get("/api/campaigns/999").status_code == 404
+
+
+@pytest.fixture
+def finished(client, db_url, fgsim, tmp_path, monkeypatch):
+    monkeypatch.setenv("FG_RUNS_DIR", str(tmp_path))
+    cid = client.post("/api/campaigns", json={"baseline": "drive-2.3.0", "candidate": "drive-2.4.0-rc1",
+                                              "scenario_count": 140}).json()["id"]
+    Worker(url=db_url, sim=fgsim).run_one()
+    return cid
+
+
+def test_failures_list_and_filters(client, finished):
+    all_ = client.get(f"/api/campaigns/{finished}/failures").json()
+    assert all_["total"] == len(all_["items"]) > 0
+    control = client.get(f"/api/campaigns/{finished}/failures?category=control_instability").json()
+    assert 0 < control["total"] <= all_["total"]
+    assert {i["category"] for i in control["items"]} == {"control_instability"}
+    s_curve = client.get(f"/api/campaigns/{finished}/failures?family=s_curve&limit=2").json()
+    assert len(s_curve["items"]) <= 2 and s_curve["total"] >= len(s_curve["items"])
+    sev = [i["severity"] for i in all_["items"]]
+    assert sev == sorted(sev, reverse=True)
+
+
+def test_clusters(client, finished):
+    cl = client.get(f"/api/campaigns/{finished}/clusters").json()
+    assert cl[0]["failures"] >= cl[-1]["failures"]
+    total = client.get(f"/api/campaigns/{finished}/failures").json()["total"]
+    assert sum(c["failures"] for c in cl) == total
+    ex = client.get(f"/api/failures/{cl[0]['example_id']}").json()
+    assert ex["failure"]["signature"] == cl[0]["signature"]
+
+
+def test_failure_detail(client, finished):
+    fid = client.get(f"/api/campaigns/{finished}/failures?limit=1").json()["items"][0]["id"]
+    d = client.get(f"/api/failures/{fid}").json()
+    assert d["campaign"]["candidate"] == "drive-2.4.0-rc1"
+    assert d["baseline"]["role"] == "baseline" and d["candidate"]["role"] == "candidate"
+    assert isinstance(d["candidate"]["events"], list)
+    assert {c["key"] for c in d["build_diff"]} >= {"control.steer_gain", "control.actuator_delay_ms"}
+    assert d["repro_command"].startswith("echo ")
+    assert client.get("/api/failures/0").status_code == 404
