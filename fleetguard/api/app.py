@@ -11,7 +11,7 @@ from .. import __version__
 from .. import db as fgdb
 from ..config import get_settings
 from ..sim import Fgsim
-from .routes import builds, meta
+from .routes import builds, campaigns, meta
 
 
 def create_app(database_url: str | None = None, sim: Fgsim | None = None, migrate: bool = True) -> FastAPI:
@@ -36,4 +36,5 @@ def create_app(database_url: str | None = None, sim: Fgsim | None = None, migrat
                        allow_headers=["*"])
     app.include_router(meta.router)
     app.include_router(builds.router)
+    app.include_router(campaigns.router)
     return app
