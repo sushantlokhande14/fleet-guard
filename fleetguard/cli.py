@@ -128,6 +128,13 @@ def cmd_worker(args: argparse.Namespace) -> int:
     return worker.main(once=args.once, poll_s=args.poll, metrics_port=args.metrics_port)
 
 
+def cmd_serve(args: argparse.Namespace) -> int:
+    import uvicorn
+
+    uvicorn.run("fleetguard.api:create_app", factory=True, host=args.host, port=args.port, log_level="info")
+    return 0
+
+
 def cmd_exporter(args: argparse.Namespace) -> int:
     import threading
 
@@ -187,6 +194,11 @@ def build_parser() -> argparse.ArgumentParser:
     wk.add_argument("--poll", type=float, default=2.0, help="seconds between queue polls")
     wk.add_argument("--metrics-port", type=int, default=0, help="serve worker metrics on this port")
     wk.set_defaults(func=cmd_worker)
+
+    sv = sub.add_parser("serve", help="run the HTTP API (also serves /metrics)")
+    sv.add_argument("--host", default="0.0.0.0")
+    sv.add_argument("--port", type=int, default=8000)
+    sv.set_defaults(func=cmd_serve)
 
     ex = sub.add_parser("exporter", help="serve fleet KPIs from the database as Prometheus metrics")
     ex.add_argument("--port", type=int, default=9102)

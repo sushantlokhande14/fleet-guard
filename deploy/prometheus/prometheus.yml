@@ -11,10 +11,10 @@ alerting:
         - targets: ["alertmanager:9093"]
 
 scrape_configs:
-  # fleet KPIs read from Postgres at scrape time
+  # fleet KPIs read from Postgres at scrape time, plus API request metrics
   - job_name: fleet
     static_configs:
-      - targets: ["exporter:9102"]
+      - targets: ["api:8000"]
 
   # campaign worker process metrics
   - job_name: worker

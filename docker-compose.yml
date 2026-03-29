@@ -41,10 +41,17 @@ services:
       migrate:
         condition: service_completed_successfully
 
-  exporter:
+  api:
     <<: *app
-    command: ["fleetguard", "exporter", "--port", "9102"]
+    command: ["fleetguard", "serve", "--port", "8000"]
     restart: unless-stopped
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     depends_on:
       migrate:
         condition: service_completed_successfully

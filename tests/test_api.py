@@ -149,3 +149,10 @@ def test_repro_endpoint(client, finished):
     r = client.post(f"/api/failures/{fid}/repro").json()
     assert r["reproduced"] is True and r["mismatches"] == []
     assert client.get(f"/api/failures/{fid}").json()["failure"]["repro_verified"] is True
+
+
+def test_metrics_endpoint(client):
+    client.get("/api/health")
+    text = client.get("/metrics").text
+    assert "fleetguard_db_up 1.0" in text
+    assert 'fleetguard_api_requests_total{method="GET",route="/api/health",status="200"}' in text
