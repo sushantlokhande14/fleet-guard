@@ -121,3 +121,31 @@ def test_failure_detail(client, finished):
     assert {c["key"] for c in d["build_diff"]} >= {"control.steer_gain", "control.actuator_delay_ms"}
     assert d["repro_command"].startswith("echo ")
     assert client.get("/api/failures/0").status_code == 404
+
+
+def test_telemetry_stored_and_replayed_match(client, db, finished):
+    fid = client.get(f"/api/campaigns/{finished}/failures?limit=1").json()["items"][0]["id"]
+    stored = client.get(f"/api/failures/{fid}/telemetry").json()
+    assert stored["source"] == "stored"
+    assert len(stored["baseline"]["t"]) > 50 and stored["candidate"]["t"][0] == 0.0
+    # drop the stored frames: the endpoint regenerates them, bit for bit (up to float4 storage)
+    db.execute("DELETE FROM telemetry_frames")
+    db.commit()
+    replayed = client.get(f"/api/failures/{fid}/telemetry").json()
+    assert replayed["source"] == "replayed"
+    for role in ("baseline", "candidate"):
+        assert len(replayed[role]["t"]) == len(stored[role]["t"])
+        assert replayed[role]["x"][-1] == pytest.approx(stored[role]["x"][-1], abs=1e-3)
+
+
+def test_scenario_geometry(client, finished):
+    fid = client.get(f"/api/campaigns/{finished}/failures?limit=1").json()["items"][0]["id"]
+    sc = client.get(f"/api/failures/{fid}/scenario").json()
+    assert len(sc["geometry"]["route"]) > 20 and "actors" in sc
+
+
+def test_repro_endpoint(client, finished):
+    fid = client.get(f"/api/campaigns/{finished}/failures?limit=1").json()["items"][0]["id"]
+    r = client.post(f"/api/failures/{fid}/repro").json()
+    assert r["reproduced"] is True and r["mismatches"] == []
+    assert client.get(f"/api/failures/{fid}").json()["failure"]["repro_verified"] is True
