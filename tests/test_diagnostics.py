@@ -6,6 +6,7 @@ import pytest
 from fleetguard import campaigns, repo
 from fleetguard import db as fgdb
 from fleetguard.builds import Registry
+from fleetguard.diagnostics import template
 from fleetguard.diagnostics.context import build_context
 from fleetguard.pipeline import post_process
 from fleetguard.sim import Fgsim
@@ -64,3 +65,36 @@ def test_unknown_failure(failed_campaign):
     conn, _ = failed_campaign
     with pytest.raises(LookupError):
         build_context(conn, 10**9)
+
+
+def test_template_report_every_category(failed_campaign):
+    conn, cid = failed_campaign
+    cats = [r["category"] for r in conn.execute(
+        "SELECT DISTINCT category FROM failures WHERE campaign_id = %s", (cid,))]
+    assert "control_instability" in cats
+    for cat in cats:
+        ctx = build_context(conn, strongest(conn, cid, cat))
+        md = template.render(ctx)
+        for section in ("## Summary", "## Likely cause", "## What changed", "## Evidence", "## Metrics",
+                        "## Timeline", "## Reproduce", "## Next steps"):
+            assert section in md, (cat, section)
+        assert ctx.repro_command in md
+        assert ctx.candidate in md and ctx.baseline in md
+
+
+def test_template_points_at_the_right_parameters(failed_campaign):
+    conn, cid = failed_campaign
+    ctx = build_context(conn, strongest(conn, cid, "control_instability"))
+    keys = {d["key"] for d in template.suspects(ctx)}
+    assert keys == {"control.steer_gain", "control.actuator_delay_ms"}
+    assert "`control.actuator_delay_ms` (40 -> 95)" in template.default_cause(ctx)
+
+
+def test_narrative_replaces_only_prose(failed_campaign):
+    conn, cid = failed_campaign
+    ctx = build_context(conn, strongest(conn, cid))
+    md = template.render(ctx, {"summary": "SUMMARY-X", "likely_cause": "CAUSE-Y", "next_steps": ["STEP-Z"]},
+                         generator="llm")
+    assert "SUMMARY-X" in md and "CAUSE-Y" in md and "1. STEP-Z" in md
+    assert "## Metrics" in md and ctx.repro_command in md
+    assert "(llm)" in md
