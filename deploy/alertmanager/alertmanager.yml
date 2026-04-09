@@ -10,6 +10,8 @@ route:
       repeat_interval: 1h
 
 receivers:
-  # Wired to the triage API's webhook once it exists; until then alerts are
-  # visible in the Alertmanager UI on :9093.
+  # alerts land in the triage API (and from there in the UI), resolved ones too
   - name: triage
+    webhook_configs:
+      - url: http://api:8000/api/alerts/webhook
+        send_resolved: true
