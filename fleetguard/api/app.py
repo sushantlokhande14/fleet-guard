@@ -14,7 +14,7 @@ from .. import db as fgdb
 from ..config import get_settings
 from ..metrics import fleet_registry
 from ..sim import Fgsim
-from .routes import builds, campaigns, failures, meta, replay
+from .routes import alerts, builds, campaigns, failures, meta, replay
 
 
 def create_app(database_url: str | None = None, sim: Fgsim | None = None, migrate: bool = True) -> FastAPI:
@@ -61,4 +61,5 @@ def create_app(database_url: str | None = None, sim: Fgsim | None = None, migrat
     app.include_router(campaigns.router)
     app.include_router(failures.router)
     app.include_router(replay.router)
+    app.include_router(alerts.router)
     return app
