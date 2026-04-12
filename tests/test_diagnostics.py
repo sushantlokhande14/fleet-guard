@@ -1,13 +1,15 @@
 import json
 import os
 
+import httpx
 import pytest
 
 from fleetguard import campaigns, repo
 from fleetguard import db as fgdb
 from fleetguard.builds import Registry
-from fleetguard.diagnostics import template
+from fleetguard.diagnostics import report, template
 from fleetguard.diagnostics.context import build_context
+from fleetguard.diagnostics.llm import LLMClient
 from fleetguard.pipeline import post_process
 from fleetguard.sim import Fgsim
 
@@ -98,3 +100,54 @@ def test_narrative_replaces_only_prose(failed_campaign):
     assert "SUMMARY-X" in md and "CAUSE-Y" in md and "1. STEP-Z" in md
     assert "## Metrics" in md and ctx.repro_command in md
     assert "(llm)" in md
+
+
+def fake_llm(payload):
+    """LLM client whose endpoint answers with a fixed JSON object."""
+    def handler(request):
+        body = {"model": "fake-7b", "choices": [{"message": {"content": json.dumps(payload)}}]}
+        return httpx.Response(200, json=body)
+
+    return LLMClient(base_url="http://fake/v1", model="fake-7b", transport=httpx.MockTransport(handler))
+
+
+def test_report_template_only(failed_campaign):
+    conn, cid = failed_campaign
+    fid = strongest(conn, cid)
+    r = report.generate(conn, fid)
+    assert r["generator"] == "template" and r["model"] is None and r["narrative"] is None
+    assert report.latest(conn, fid)["id"] == r["id"]
+
+
+def test_report_with_grounded_llm_narrative(failed_campaign):
+    conn, cid = failed_campaign
+    fid = strongest(conn, cid, "control_instability")
+    ctx = build_context(conn, fid)
+    b, c = ctx.evidence["steer_reversals_per_s"]
+    good = {"summary": f"Steering reversals rose from {b}/s to {c}/s on {ctx.scenario['id']}.",
+            "likely_cause": "The added actuator delay (control.actuator_delay_ms) makes the steering loop ring.",
+            "suspect_parameters": ["control.actuator_delay_ms"],
+            "next_steps": ["Revert the delay and re-run the cluster."], "confidence": "medium"}
+    r = report.generate(conn, fid, llm=fake_llm(good))
+    assert r["generator"] == "llm" and r["model"] == "fake-7b"
+    assert good["summary"] in r["markdown"] and "(llm, fake-7b)" in r["markdown"]
+    assert r["narrative"]["suspect_parameters"] == ["control.actuator_delay_ms"]
+
+
+def test_report_rejects_hallucination_and_falls_back(failed_campaign):
+    conn, cid = failed_campaign
+    fid = strongest(conn, cid, "control_instability")
+    bad = {"summary": "Steering reversals rose by 812%.", "likely_cause": "planner.headway_s was cut.",
+           "next_steps": ["x"]}
+    r = report.generate(conn, fid, llm=fake_llm(bad))
+    assert r["generator"] == "template"
+    assert r["meta"]["llm_rejected"] is True
+    assert any("planner.headway_s" in i for i in r["meta"]["guard_issues"])
+    assert "812" not in r["markdown"]
+
+
+def test_report_survives_llm_outage(failed_campaign):
+    conn, cid = failed_campaign
+    down = LLMClient(base_url="http://127.0.0.1:9/v1", timeout_s=1)
+    r = report.generate(conn, strongest(conn, cid), llm=down)
+    assert r["generator"] == "template" and "unreachable" in r["meta"]["llm_error"]
