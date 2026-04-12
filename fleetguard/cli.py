@@ -122,6 +122,26 @@ def cmd_repro(args: argparse.Namespace) -> int:
     return 0 if r["reproduced"] else 1
 
 
+def cmd_report(args: argparse.Namespace) -> int:
+    from .diagnostics import report
+    from .diagnostics.llm import LLMClient
+
+    client = LLMClient() if args.llm else None
+    with fgdb.session() as conn:
+        r = report.generate(conn, args.failure_id, llm=client)
+    if args.out:
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(r["markdown"])
+        print(f"wrote {args.out} ({r['generator']})")
+    else:
+        print(r["markdown"])
+    for issue in r["meta"].get("guard_issues", []):
+        print(f"guard: {issue}", file=sys.stderr)
+    if "llm_error" in r["meta"]:
+        print(f"llm: {r['meta']['llm_error']} (used the template)", file=sys.stderr)
+    return 0
+
+
 def cmd_worker(args: argparse.Namespace) -> int:
     from . import worker
 
@@ -188,6 +208,12 @@ def build_parser() -> argparse.ArgumentParser:
     rp = sub.add_parser("repro", help="replay a failure and check it matches what was stored")
     rp.add_argument("failure_id", type=int)
     rp.set_defaults(func=cmd_repro)
+
+    rep = sub.add_parser("report", help="write a diagnostic report for one failure")
+    rep.add_argument("failure_id", type=int)
+    rep.add_argument("--llm", action="store_true", help="narrative from the configured LLM (local Ollama by default)")
+    rep.add_argument("--out", help="write markdown here instead of stdout")
+    rep.set_defaults(func=cmd_report)
 
     wk = sub.add_parser("worker", help="run queued campaigns")
     wk.add_argument("--once", action="store_true", help="drain the queue and exit")

@@ -1,9 +1,11 @@
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from fleetguard import repo
 from fleetguard.api import create_app
 from fleetguard.builds import Registry
+from fleetguard.diagnostics.llm import LLMClient
 from fleetguard.worker import Worker
 
 pytestmark = pytest.mark.fgsim
@@ -156,3 +158,28 @@ def test_metrics_endpoint(client):
     text = client.get("/metrics").text
     assert "fleetguard_db_up 1.0" in text
     assert 'fleetguard_api_requests_total{method="GET",route="/api/health",status="200"}' in text
+
+
+def test_reports_api(client, finished):
+    fid = client.get(f"/api/campaigns/{finished}/failures?limit=1").json()["items"][0]["id"]
+    assert client.get(f"/api/failures/{fid}/report").status_code == 404
+    r = client.post(f"/api/failures/{fid}/report?llm=false")
+    assert r.status_code == 201 and r.json()["generator"] == "template"
+    assert client.get(f"/api/failures/{fid}/report").json()["id"] == r.json()["id"]
+    assert len(client.get(f"/api/failures/{fid}/reports").json()) == 1
+
+
+def test_report_api_uses_llm_factory(db, db_url, fgsim, finished):
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(503, text="model loading")
+
+    app = create_app(db_url, sim=fgsim,
+                     llm_factory=lambda: LLMClient(base_url="http://fake/v1", transport=httpx.MockTransport(handler)))
+    with TestClient(app) as c:
+        fid = c.get(f"/api/campaigns/{finished}/failures?limit=1").json()["items"][0]["id"]
+        r = c.post(f"/api/failures/{fid}/report").json()
+    assert len(calls) == 1
+    assert r["generator"] == "template" and "503" in r["meta"]["llm_error"]

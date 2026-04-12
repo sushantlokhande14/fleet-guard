@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -12,12 +13,14 @@ from psycopg_pool import ConnectionPool
 from .. import __version__
 from .. import db as fgdb
 from ..config import get_settings
+from ..diagnostics.llm import LLMClient
 from ..metrics import fleet_registry
 from ..sim import Fgsim
-from .routes import alerts, builds, campaigns, failures, meta, replay
+from .routes import alerts, builds, campaigns, failures, meta, replay, reports
 
 
-def create_app(database_url: str | None = None, sim: Fgsim | None = None, migrate: bool = True) -> FastAPI:
+def create_app(database_url: str | None = None, sim: Fgsim | None = None, migrate: bool = True,
+               llm_factory: Callable[[], LLMClient] | None = None) -> FastAPI:
     url = database_url or get_settings().database_url
 
     @asynccontextmanager
@@ -27,6 +30,7 @@ def create_app(database_url: str | None = None, sim: Fgsim | None = None, migrat
                 fgdb.migrate(conn)
         app.state.pool = ConnectionPool(url, min_size=1, max_size=8, kwargs={"row_factory": dict_row}, open=True)
         app.state.sim = sim or Fgsim()
+        app.state.llm_factory = llm_factory or LLMClient
         try:
             yield
         finally:
@@ -62,4 +66,5 @@ def create_app(database_url: str | None = None, sim: Fgsim | None = None, migrat
     app.include_router(failures.router)
     app.include_router(replay.router)
     app.include_router(alerts.router)
+    app.include_router(reports.router)
     return app
