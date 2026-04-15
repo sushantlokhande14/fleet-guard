@@ -114,6 +114,16 @@ def build_context(conn: psycopg.Connection, failure_id: int, timeline_limit: int
     ).fetchone()
     total = conn.execute("SELECT count(*) AS n FROM failures WHERE campaign_id = %s",
                          (f["campaign_id"],)).fetchone()["n"]
+    members = conn.execute(
+        """
+        SELECT f.id, f.scenario_id, s.weather, f.severity, round(f.score::numeric, 2)::float AS score,
+               round(f.first_t::numeric, 1)::float AS first_t
+          FROM failures f JOIN scenarios s ON s.id = f.scenario_id
+         WHERE f.campaign_id = %s AND f.signature = %s AND f.id <> %s
+         ORDER BY f.severity DESC, f.score DESC LIMIT 10
+        """,
+        (f["campaign_id"], f["signature"], f["id"]),
+    ).fetchall()
 
     params_summary = {k_: s["params"].get(k_) for k_ in ("speed_limit_mps", "ego_v0_mps", "friction", "cones")
                       if k_ in s["params"]}
@@ -140,7 +150,7 @@ def build_context(conn: psycopg.Connection, failure_id: int, timeline_limit: int
         timeline=timeline,
         build_diff=diff,
         cluster={"signature": f["signature"], "size": cl["size"], "families": sorted(cl["families"]),
-                 "critical": cl["critical"], "campaign_failures": total},
+                 "critical": cl["critical"], "campaign_failures": total, "others": members},
         repro_command=repro.command(repro.load_case(conn, failure_id)),
         repro_verified=f["repro_verified"],
     )

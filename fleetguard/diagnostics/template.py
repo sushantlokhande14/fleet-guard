@@ -183,6 +183,18 @@ def render(ctx: FailureContext, narrative: dict[str, Any] | None = None, generat
         out += [f"| {e['t']} | {e['role']} | {e['kind']} | {_fmt(e['value'])} | {e['detail']} |" for e in ctx.timeline]
     else:
         out.append("No events recorded.")
+    others = ctx.cluster.get("others") or []
+    out += ["", "## Same signature", ""]
+    if others:
+        out.append(f"{ctx.cluster['size'] - 1} other failure(s) in this campaign share `{ctx.signature}`; "
+                   "they are very likely the same bug. Strongest first:")
+        out += ["", "| failure | scenario | weather | severity | score | first at (s) |", "|---|---|---|---|---|---|"]
+        out += [f"| #{o['id']} | {o['scenario_id']} | {o['weather']} | {o['severity']} | {_fmt(o['score'])} "
+                f"| {_fmt(o['first_t'])} |" for o in others]
+        if ctx.cluster["size"] - 1 > len(others):
+            out.append(f"| ... | {ctx.cluster['size'] - 1 - len(others)} more | | | | |")
+    else:
+        out.append("No other failure in this campaign has this signature.")
     verified = {True: "verified: replays identically", False: "replay did NOT match the stored run",
                 None: "not yet verified"}[ctx.repro_verified]
     out += [

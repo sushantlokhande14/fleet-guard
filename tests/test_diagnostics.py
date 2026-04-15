@@ -151,3 +151,19 @@ def test_report_survives_llm_outage(failed_campaign):
     down = LLMClient(base_url="http://127.0.0.1:9/v1", timeout_s=1)
     r = report.generate(conn, strongest(conn, cid), llm=down)
     assert r["generator"] == "template" and "unreachable" in r["meta"]["llm_error"]
+
+
+def test_cluster_members_listed(failed_campaign):
+    conn, cid = failed_campaign
+    sig = conn.execute("SELECT signature FROM failures WHERE campaign_id = %s GROUP BY signature"
+                       " ORDER BY count(*) DESC LIMIT 1", (cid,)).fetchone()["signature"]
+    fid = conn.execute("SELECT id FROM failures WHERE campaign_id = %s AND signature = %s ORDER BY score DESC"
+                       " LIMIT 1", (cid, sig)).fetchone()["id"]
+    ctx = build_context(conn, fid)
+    others = ctx.cluster["others"]
+    assert len(others) == min(10, ctx.cluster["size"] - 1)
+    assert fid not in {o["id"] for o in others}
+    md = template.render(ctx)
+    assert "## Same signature" in md
+    if others:
+        assert f"#{others[0]['id']}" in md
