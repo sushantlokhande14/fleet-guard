@@ -1,0 +1,396 @@
+[
+  {
+    "failure_id": 12396,
+    "category": "disengagement",
+    "signature": "disengagement/construction_shift/time_limit",
+    "accepted": true,
+    "latency_s": 14.4,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      1516,
+      168
+    ]
+  },
+  {
+    "failure_id": 6598,
+    "category": "disengagement",
+    "signature": "disengagement/construction_shift/ttc_takeover:cone",
+    "accepted": true,
+    "latency_s": 15.27,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2028,
+      194
+    ]
+  },
+  {
+    "failure_id": 6974,
+    "category": "disengagement",
+    "signature": "disengagement/ped_crossing/pedestrian",
+    "accepted": false,
+    "latency_s": 18.54,
+    "issues": [
+      "number not found in the facts: 41.7"
+    ],
+    "error": null,
+    "tokens": [
+      1890,
+      253
+    ]
+  },
+  {
+    "failure_id": 261,
+    "category": "disengagement",
+    "signature": "disengagement/ped_crossing/ttc_takeover:pedestrian",
+    "accepted": true,
+    "latency_s": 20.92,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2326,
+      263
+    ]
+  },
+  {
+    "failure_id": 15070,
+    "category": "disengagement",
+    "signature": "disengagement/stop_and_go/ttc_takeover:vehicle",
+    "accepted": false,
+    "latency_s": 21.49,
+    "issues": [
+      "number not found in the facts: 10.2"
+    ],
+    "error": null,
+    "tokens": [
+      3197,
+      251
+    ]
+  },
+  {
+    "failure_id": 1707,
+    "category": "disengagement",
+    "signature": "disengagement/urban_cut_in/ttc_takeover:vehicle",
+    "accepted": true,
+    "latency_s": 13.86,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      1804,
+      192
+    ]
+  },
+  {
+    "failure_id": 8938,
+    "category": "latency_spike",
+    "signature": "latency_spike/construction_shift/deadline",
+    "accepted": true,
+    "latency_s": 14.09,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2330,
+      170
+    ]
+  },
+  {
+    "failure_id": 3012,
+    "category": "latency_spike",
+    "signature": "latency_spike/construction_shift/p99",
+    "accepted": true,
+    "latency_s": 16.57,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2173,
+      210
+    ]
+  },
+  {
+    "failure_id": 9017,
+    "category": "latency_spike",
+    "signature": "latency_spike/construction_shift/watchdog",
+    "accepted": true,
+    "latency_s": 13.83,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2761,
+      170
+    ]
+  },
+  {
+    "failure_id": 9096,
+    "category": "latency_spike",
+    "signature": "latency_spike/highway_follow/deadline",
+    "accepted": true,
+    "latency_s": 14.07,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2674,
+      174
+    ]
+  },
+  {
+    "failure_id": 9659,
+    "category": "latency_spike",
+    "signature": "latency_spike/highway_follow/p99",
+    "accepted": true,
+    "latency_s": 15.33,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2394,
+      231
+    ]
+  },
+  {
+    "failure_id": 15433,
+    "category": "latency_spike",
+    "signature": "latency_spike/highway_follow/watchdog",
+    "accepted": true,
+    "latency_s": 11.53,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2184,
+      207
+    ]
+  },
+  {
+    "failure_id": 14212,
+    "category": "route_deviation",
+    "signature": "route_deviation/construction_shift/lane_departure",
+    "accepted": true,
+    "latency_s": 11.94,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      1693,
+      209
+    ]
+  },
+  {
+    "failure_id": 14165,
+    "category": "route_deviation",
+    "signature": "route_deviation/construction_shift/offset",
+    "accepted": true,
+    "latency_s": 11.23,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      1828,
+      208
+    ]
+  },
+  {
+    "failure_id": 5991,
+    "category": "route_deviation",
+    "signature": "route_deviation/highway_follow/offset",
+    "accepted": true,
+    "latency_s": 10.61,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2200,
+      190
+    ]
+  },
+  {
+    "failure_id": 6729,
+    "category": "route_deviation",
+    "signature": "route_deviation/intersection_turn/lane_departure",
+    "accepted": true,
+    "latency_s": 12.63,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      1686,
+      257
+    ]
+  },
+  {
+    "failure_id": 6713,
+    "category": "route_deviation",
+    "signature": "route_deviation/intersection_turn/offset",
+    "accepted": true,
+    "latency_s": 11.39,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2099,
+      231
+    ]
+  },
+  {
+    "failure_id": 6193,
+    "category": "route_deviation",
+    "signature": "route_deviation/ped_crossing/offset",
+    "accepted": true,
+    "latency_s": 9.57,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      1733,
+      194
+    ]
+  },
+  {
+    "failure_id": 502,
+    "category": "perception_error",
+    "signature": "perception_error/construction_shift/phantom",
+    "accepted": true,
+    "latency_s": 10.45,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2070,
+      189
+    ]
+  },
+  {
+    "failure_id": 1189,
+    "category": "perception_error",
+    "signature": "perception_error/highway_follow/phantom",
+    "accepted": true,
+    "latency_s": 14.09,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2435,
+      243
+    ]
+  },
+  {
+    "failure_id": 386,
+    "category": "perception_error",
+    "signature": "perception_error/highway_follow/recall",
+    "accepted": true,
+    "latency_s": 12.13,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2426,
+      206
+    ]
+  },
+  {
+    "failure_id": 7045,
+    "category": "perception_error",
+    "signature": "perception_error/highway_follow/vehicle",
+    "accepted": true,
+    "latency_s": 12.27,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2432,
+      199
+    ]
+  },
+  {
+    "failure_id": 7945,
+    "category": "perception_error",
+    "signature": "perception_error/intersection_turn/phantom",
+    "accepted": true,
+    "latency_s": 12.73,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      1802,
+      239
+    ]
+  },
+  {
+    "failure_id": 359,
+    "category": "perception_error",
+    "signature": "perception_error/intersection_turn/recall",
+    "accepted": true,
+    "latency_s": 13.72,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      1961,
+      237
+    ]
+  },
+  {
+    "failure_id": 5770,
+    "category": "control_instability",
+    "signature": "control_instability/construction_shift/accel",
+    "accepted": true,
+    "latency_s": 13.98,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2321,
+      244
+    ]
+  },
+  {
+    "failure_id": 13494,
+    "category": "control_instability",
+    "signature": "control_instability/construction_shift/accel+steer",
+    "accepted": true,
+    "latency_s": 13.35,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2002,
+      237
+    ]
+  },
+  {
+    "failure_id": 12418,
+    "category": "control_instability",
+    "signature": "control_instability/construction_shift/reversals",
+    "accepted": true,
+    "latency_s": 10.15,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      1600,
+      181
+    ]
+  },
+  {
+    "failure_id": 13549,
+    "category": "control_instability",
+    "signature": "control_instability/construction_shift/steer",
+    "accepted": true,
+    "latency_s": 11.84,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2199,
+      204
+    ]
+  },
+  {
+    "failure_id": 14988,
+    "category": "control_instability",
+    "signature": "control_instability/highway_follow/accel",
+    "accepted": true,
+    "latency_s": 11.48,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2118,
+      189
+    ]
+  },
+  {
+    "failure_id": 14981,
+    "category": "control_instability",
+    "signature": "control_instability/highway_follow/reversals",
+    "accepted": true,
+    "latency_s": 12.39,
+    "issues": [],
+    "error": null,
+    "tokens": [
+      2571,
+      228
+    ]
+  }
+]
