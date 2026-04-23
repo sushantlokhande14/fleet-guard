@@ -3,8 +3,9 @@
 A narrative is rejected (and the deterministic text used instead) when it:
   * is missing fields or has the wrong shape,
   * blames a parameter that did not change between the two builds,
-  * states a number that cannot be traced to the facts (directly, or as a
-    difference, ratio or percent change between a baseline and candidate value).
+  * states a number that cannot be traced to the facts (directly, as a
+    percentage of a 0-1 fraction, or as a difference, ratio or percent change
+    between a baseline and candidate value).
 Unknown entries in suspect_parameters are dropped with a note rather than
 failing the whole narrative.
 """
@@ -64,6 +65,8 @@ def grounded_numbers(ctx: FailureContext) -> set[float]:
         if b:
             ratio = c / b
             nums.update({ratio, abs(ratio - 1) * 100})
+    # a 0-1 fraction (route completion, recall) may be written as a percentage
+    nums.update({100 * n for n in nums if 0 < n <= 1})
     return nums
 
 

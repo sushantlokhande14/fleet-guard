@@ -75,3 +75,10 @@ def test_shape_errors():
 def test_small_counts_are_not_policed():
     r = check(dict(GOOD, summary="Two things happened, then 4 more on s_curve-4."), ctx())
     assert r.ok, r.issues
+
+
+def test_fraction_as_percent_is_grounded():
+    # the model wrote route completion 0.417 as 41.7% (seen with qwen2.5:7b)
+    c = ctx(evidence={"route_completion": 0.417, "steer_reversals_per_s": [0.169, 0.305]})
+    r = check(dict(GOOD, summary="Only 41.7% of the route was completed on s_curve-4."), c)
+    assert r.ok, r.issues

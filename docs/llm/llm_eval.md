@@ -28,3 +28,7 @@ Both were the guard's mistake, not the model's. The model wrote route completion
 0.417 as "41.7%" (failure 6974) and 0.102 as "10.2%" (failure 15070); the guard
 did not know a 0-1 fraction may be stated as a percentage and rejected both
 narratives as ungrounded. Everything else in them checked out.
+
+After teaching the guard that a fraction may be written as a percentage, both
+stored narratives were re-checked and pass. Note this re-check reuses the same
+two outputs; a fresh run would sample new narratives.
