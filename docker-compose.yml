@@ -7,6 +7,13 @@ x-app: &app
   image: fleetguard:latest
   environment:
     FG_DATABASE_URL: postgresql://fleetguard:fleetguard@db:5432/fleetguard
+    # report narratives from Ollama on the host; any OpenAI-compatible endpoint works
+    FG_LLM_BASE_URL: ${FG_LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+    FG_LLM_MODEL: ${FG_LLM_MODEL:-qwen2.5:7b}
+    FG_LLM_API_KEY: ${FG_LLM_API_KEY:-}
+    FG_AUTO_REPORTS_LLM: ${FG_AUTO_REPORTS_LLM:-0}
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   depends_on:
     db:
       condition: service_healthy
