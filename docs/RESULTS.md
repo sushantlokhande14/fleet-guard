@@ -60,3 +60,27 @@ Severe 21/25, moderate 16/25.
 Same-author caveat: the regressions, the simulator and the classifiers were all
 written by the same person, so this measures the pipeline end to end, not how it
 would do on someone else's bugs.
+
+## Triage workload (proxy, April)
+
+```bash
+python tools/triage_effort.py --campaigns 2,90
+python tools/triage_effort.py --benchmark a8c10ffd
+```
+
+Human triage time was not measured; this project has no triage engineers to
+time. What can be counted is how many items someone has to open. Without the
+platform, that is every scenario where the candidate behaved differently from
+the baseline (fgsim flags the pair). With it, it is one report per failure
+cluster.
+
+| campaign | scenarios | flagged pairs | failed candidate drives | classified failures | clusters | items saved |
+|---|---|---|---|---|---|---|
+| #2 drive-2.4.0-rc1 | 700 | 208 | 12 | 185 | 10 | 95% |
+| #90 drive-2.4.0-rc2 | 700 | 160 | 12 | 64 | 6 | 96% |
+
+Over the 50 seeded-regression campaigns the median reduction is 98% (59% to 99%).
+Two things this does not show: reading a report takes longer than glancing at a
+pass/fail line, and a cluster can hide a second bug that happens to share a
+signature. Each report comes with the evidence, the parameter diff, the event
+timeline and a verified repro command that would otherwise be pulled together by hand.
