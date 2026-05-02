@@ -147,6 +147,9 @@ main {
 .mono {
   font-family: var(--mono);
 }
+.nowrap {
+  white-space: nowrap;
+}
 
 /* --- tables --------------------------------------------------------------- */
 

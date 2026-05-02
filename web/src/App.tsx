@@ -1,5 +1,7 @@
 import { NavLink, Route, Routes } from "react-router-dom";
 
+import Campaigns from "./pages/Campaigns";
+
 function Shield() {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true">
@@ -39,7 +41,7 @@ export default function App() {
       </header>
       <main>
         <Routes>
-          <Route path="/" element={<Placeholder title="Campaigns" />} />
+          <Route path="/" element={<Campaigns />} />
           <Route path="/builds" element={<Placeholder title="Builds" />} />
           <Route path="*" element={<Placeholder title="Not found" />} />
         </Routes>
