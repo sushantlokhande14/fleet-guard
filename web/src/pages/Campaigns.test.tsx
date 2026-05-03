@@ -18,7 +18,7 @@ function renderPage(routes: Record<string, unknown>) {
 
 describe("Campaigns page", () => {
   it("lists campaigns with status, verdict and flagged categories", async () => {
-    renderPage({ "/api/campaigns": [campaignRunning, campaignDone] });
+    renderPage({ "/api/campaigns": [campaignRunning, campaignDone], "/api/alerts": [] });
     const done = (await screen.findByText("drive-2.4.0-rc1")).closest("tr")!;
     expect(within(done).getByText("regression")).toBeInTheDocument();
     expect(within(done).getByText("Latency")).toBeInTheDocument();
@@ -30,7 +30,7 @@ describe("Campaigns page", () => {
   });
 
   it("explains the empty state", async () => {
-    renderPage({ "/api/campaigns": [] });
+    renderPage({ "/api/campaigns": [], "/api/alerts": [] });
     expect(await screen.findByText(/No campaigns yet/)).toBeInTheDocument();
   });
 

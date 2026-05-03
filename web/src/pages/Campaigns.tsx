@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { api, type CampaignSummary } from "../api";
+import AlertsBanner from "../components/AlertsBanner";
 import { CategoryBadge, Progress, StatusBadge, VerdictBadge } from "../components/Badges";
 import NewCampaign from "../components/NewCampaign";
 import { ago, duration, isActive, num } from "../format";
@@ -66,6 +67,7 @@ export default function Campaigns() {
           {showNew ? "Close" : "New campaign"}
         </button>
       </div>
+      <AlertsBanner />
       {showNew && <NewCampaign onCreated={(id) => navigate(`/campaigns/${id}`)} />}
       <div className="panel">
         {list.error && <div className="error">Could not load campaigns: {list.error.message}</div>}
