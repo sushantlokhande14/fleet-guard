@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from "react-router-dom";
 
 import CampaignDetail from "./pages/CampaignDetail";
 import Campaigns from "./pages/Campaigns";
+import FailureDetail from "./pages/FailureDetail";
 
 function Shield() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Campaigns />} />
           <Route path="/campaigns/:id" element={<CampaignDetail />} />
+          <Route path="/failures/:id" element={<FailureDetail />} />
           <Route path="/builds" element={<Placeholder title="Builds" />} />
           <Route path="*" element={<Placeholder title="Not found" />} />
         </Routes>
