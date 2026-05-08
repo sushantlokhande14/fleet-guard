@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { api, type Drive, type FailureDetail as Detail } from "../api";
 import { CategoryBadge, SeverityBadge } from "../components/Badges";
+import Replay from "../components/Replay";
 import { CATEGORY_LABEL, num } from "../format";
 import { useAsync } from "../hooks";
 
@@ -175,11 +177,13 @@ export function Overview({ d }: { d: Detail }) {
 export default function FailureDetail() {
   const id = Number(useParams().id);
   const detail = useAsync(() => api.failure(id), [id]);
+  const [cursor, setCursor] = useState<number | null>(null);
   if (detail.error) return <div className="panel error">Failure {id}: {detail.error.message}</div>;
   if (!detail.data) return <div className="panel muted">Loading failure {id}...</div>;
   return (
     <div className="stack">
       <Overview d={detail.data} />
+      <Replay failureId={id} candidate={detail.data.candidate} cursor={cursor} onCursor={setCursor} />
     </div>
   );
 }

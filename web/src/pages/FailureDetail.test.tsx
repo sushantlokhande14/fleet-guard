@@ -9,7 +9,12 @@ import FailureDetail from "./FailureDetail";
 afterEach(() => vi.unstubAllGlobals());
 
 function renderFailure(extra: Record<string, unknown> = {}) {
-  vi.stubGlobal("fetch", vi.fn(routeFetch({ "/api/failures/41": failureDetail, ...extra })));
+  const telemetry = { source: "stored", columns: [], baseline: { t: [0, 0.1], v: [1, 2] }, candidate: { t: [0, 0.1], v: [1, 3] } };
+  vi.stubGlobal("fetch", vi.fn(routeFetch({
+    "/api/failures/41/telemetry": telemetry,
+    "/api/failures/41": failureDetail,
+    ...extra,
+  })));
   return render(
     <MemoryRouter initialEntries={["/failures/41"]}>
       <Routes>
