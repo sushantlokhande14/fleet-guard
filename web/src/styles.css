@@ -302,6 +302,17 @@ pre.cmd {
   vertical-align: middle;
 }
 
+.report {
+  overflow-x: auto;
+  min-width: 0;
+}
+.report pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--panel-2);
+  padding: 10px 12px;
+  border-radius: 6px;
+}
 .report h1 {
   font-size: 18px;
 }

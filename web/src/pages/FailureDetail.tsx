@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { api, type Drive, type FailureDetail as Detail } from "../api";
 import { CategoryBadge, SeverityBadge } from "../components/Badges";
 import Replay from "../components/Replay";
+import ReportPanel from "../components/ReportPanel";
 import { CATEGORY_LABEL, num } from "../format";
 import { useAsync } from "../hooks";
 
@@ -184,6 +185,7 @@ export default function FailureDetail() {
     <div className="stack">
       <Overview d={detail.data} />
       <Replay failureId={id} candidate={detail.data.candidate} cursor={cursor} onCursor={setCursor} />
+      <ReportPanel failureId={id} reproCommand={detail.data.repro_command} />
     </div>
   );
 }
