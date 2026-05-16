@@ -63,6 +63,15 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  web:
+    build: ./web
+    image: fleetguard-web:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
   prometheus:
     image: prom/prometheus:v2.53.1
     volumes:
