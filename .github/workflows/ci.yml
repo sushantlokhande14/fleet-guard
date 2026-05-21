@@ -96,3 +96,16 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-24.04
+    needs: [core, python, web]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the stack
+        run: docker compose up -d --build --wait api web worker
+      - name: Smoke test
+        run: python3 tools/e2e_smoke.py
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --tail 200 api worker migrate
