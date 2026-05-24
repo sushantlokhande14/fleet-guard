@@ -1,0 +1,8 @@
+{
+  "name": "drive-2.4.0-rc3",
+  "description": "rc2 with the CAN gateway firmware patch: actuation latency back down to 55 ms.",
+  "parent": "drive-2.4.0-rc2",
+  "control": {
+    "actuator_delay_ms": 55
+  }
+}
