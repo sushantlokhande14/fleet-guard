@@ -87,6 +87,8 @@ def test_create_validation(client):
 @pytest.fixture
 def finished(client, db_url, fgsim, tmp_path, monkeypatch):
     monkeypatch.setenv("FG_RUNS_DIR", str(tmp_path))
+    # report endpoints are tested from a clean slate; auto-reports have their own tests in test_pipeline
+    monkeypatch.setenv("FG_AUTO_REPORTS", "0")
     cid = client.post("/api/campaigns", json={"baseline": "drive-2.3.0", "candidate": "drive-2.4.0-rc1",
                                               "scenario_count": 140}).json()["id"]
     Worker(url=db_url, sim=fgsim).run_one()
