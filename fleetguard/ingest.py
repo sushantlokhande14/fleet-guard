@@ -65,6 +65,11 @@ def ingest_batch(conn: psycopg.Connection, campaign_id: int, out_dir: str | Path
                 cp.write_row(row)
                 n += 1
         counts["drives"] = n
+        # Temp tables never get statistics on their own, and the rows just copied
+        # are invisible to the planner until analyzed. Without this the joins
+        # below run as nested loops: a 50k-scenario campaign sat in the pairs
+        # join for ten minutes.
+        cur.execute("ANALYZE drives")
 
         # -- events ---------------------------------------------------------------
         cur.execute(
@@ -75,6 +80,7 @@ def ingest_batch(conn: psycopg.Connection, campaign_id: int, out_dir: str | Path
             for e in _jsonl(out / "events.jsonl"):
                 cp.write_row((e["scenario_id"], e["role"], e["t"], e["kind"], e["severity"], e["value"],
                               e["duration"], e["detail"]))
+        cur.execute("ANALYZE stage_events")
         cur.execute(
             """
             INSERT INTO drive_events (drive_id, t, kind, severity, value, duration, detail)
@@ -95,6 +101,7 @@ def ingest_batch(conn: psycopg.Connection, campaign_id: int, out_dir: str | Path
         with cur.copy("COPY stage_pairs FROM STDIN") as cp:
             for p in _jsonl(out / "pairs.jsonl"):
                 cp.write_row((p["scenario_id"], p["flagged"], *[p[c] for c in PAIR_COLS]))
+        cur.execute("ANALYZE stage_pairs")
         pair_cols = ", ".join(PAIR_COLS)
         cur.execute(
             f"""
@@ -122,6 +129,7 @@ def ingest_batch(conn: psycopg.Connection, campaign_id: int, out_dir: str | Path
                     open(frames, "rb") as f:
                 while chunk := f.read(1 << 20):
                     cp.write(chunk)
+            cur.execute("ANALYZE stage_frames")
             frame_cols = ", ".join(FRAME_COLS)
             cur.execute(
                 f"""
@@ -134,9 +142,9 @@ def ingest_batch(conn: psycopg.Connection, campaign_id: int, out_dir: str | Path
             )
             counts["frames"] = cur.rowcount
 
-        # Fresh statistics. Without them the planner still thinks this campaign
-        # has no rows and picks nested loops that re-run the classifiers' event
-        # aggregates once per pair (12.6 s instead of 48 ms on a 700-pair campaign).
+        # Fresh statistics for the classifiers too: without them the planner still
+        # thinks this campaign has no rows and re-runs the event aggregates once
+        # per pair (12.6 s instead of 48 ms on a 700-pair campaign).
         for table in ("scenarios", "drives", "drive_events", "pairs", "telemetry_frames"):
             cur.execute(f"ANALYZE {table}")
     return counts
