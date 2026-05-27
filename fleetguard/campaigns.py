@@ -98,21 +98,28 @@ def run(campaign_id: int, *, url: str | None = None, sim: Fgsim | None = None, t
         status.set("running", started_at=_now(), progress=0.0, error=None)
         if out_dir.exists():
             shutil.rmtree(out_dir)
+        timings: dict[str, float] = {}
+        t0 = time.monotonic()
         stats = sim.batch(
             count=c["scenario_count"], out_dir=out_dir, families=c["families"], seed_start=c["seed_start"],
             baseline=builds[c["baseline"]], candidate=builds[c["candidate"]],
             threads=settings.sim_threads if threads is None else threads, on_progress=status.progress,
         )
+        timings["simulate"] = round(time.monotonic() - t0, 2)
         status.set("ingesting", progress=1.0, sim_seconds=stats["seconds"],
                    drives_per_second=stats["drives_per_second"])
+        t0 = time.monotonic()
         with fgdb.session(url) as conn:
             counts = ingest_batch(conn, campaign_id, out_dir)
+        timings["ingest"] = round(time.monotonic() - t0, 2)
         if after_ingest is not None:
             status.set("classifying")
+            t0 = time.monotonic()
             with fgdb.session(url) as conn:
                 after_ingest(conn, campaign_id)
-        status.set("done", finished_at=_now())
-        return {"sim": stats, "ingested": counts}
+            timings["classify"] = round(time.monotonic() - t0, 2)
+        status.set("done", finished_at=_now(), timings=Jsonb(timings))
+        return {"sim": stats, "ingested": counts, "timings": timings}
     except Exception as exc:
         status.set("failed", error=f"{type(exc).__name__}: {exc}", finished_at=_now())
         raise

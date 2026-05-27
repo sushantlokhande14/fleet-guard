@@ -80,6 +80,8 @@ def _print_verdict(campaign_id: int) -> int:
         print(f"no campaign {campaign_id}", file=sys.stderr)
         return 1
     _print_campaign(c)
+    if c.get("timings"):
+        print("timings: " + ", ".join(f"{k} {v:.1f}s" for k, v in c["timings"].items()))
     v = c["verdict"]
     if not v:
         return 0

@@ -38,6 +38,7 @@ def test_run_end_to_end(db, db_url, builds, fgsim, tmp_path):
     assert c["started_at"] is not None and c["finished_at"] >= c["started_at"]
     assert c["drives_per_second"] > 0
     assert seen == [{"status": "classifying"}]
+    assert set(c["timings"]) == {"simulate", "ingest", "classify"} and out["timings"] == c["timings"]
     assert not (tmp_path / f"campaign-{cid}").exists()  # working files cleaned up
 
 
