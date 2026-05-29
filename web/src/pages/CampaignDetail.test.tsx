@@ -37,7 +37,15 @@ const failures = {
 
 function renderPage() {
   const fetch = vi.fn(routeFetch({
-    "/api/campaigns/2/metrics": { roles: [role("baseline", 0.995, 0.17), role("candidate", 0.995, 0.31)], families: [] },
+    "/api/campaigns/2/metrics": {
+      roles: [role("baseline", 0.995, 0.17), role("candidate", 0.995, 0.31)],
+      families: [
+        { family: "s_curve", role: "baseline", drives: 100, failed: 1, collisions: 0, recall: 1, planner_p99_p99_ms: 88,
+          steer_reversal_rate: 0.1 },
+        { family: "s_curve", role: "candidate", drives: 100, failed: 1, collisions: 0, recall: 1,
+          planner_p99_p99_ms: 88, steer_reversal_rate: 0.3 },
+      ],
+    },
     "/api/campaigns/2/clusters": [{ signature: "control_instability/s_curve/steer", category: "control_instability",
       family: "s_curve", failures: 59, severity: 2, mean_score: 0.5, example_id: 86 }],
     "/api/campaigns/2/failures": failures,
@@ -66,6 +74,10 @@ describe("Campaign detail", () => {
     expect(screen.getByRole("link", { name: "control_instability/s_curve/steer" })).toHaveAttribute(
       "href", "/failures/86");
     expect(await screen.findByRole("link", { name: "#86" })).toBeInTheDocument();
+    // steering got worse on s_curve, failures did not
+    const row = screen.getByTestId("family-s_curve");
+    expect(row.querySelectorAll(".error")).toHaveLength(1);
+    expect(row).toHaveTextContent("0.1 -> 0.3");
   });
 
   it("filters failures by category", async () => {

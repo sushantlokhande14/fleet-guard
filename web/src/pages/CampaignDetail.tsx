@@ -4,6 +4,7 @@ import { api, type RoleMetrics } from "../api";
 import { CategoryBadge, Progress, SeverityBadge, StatusBadge, VerdictBadge } from "../components/Badges";
 import CategoryBars from "../components/CategoryBars";
 import FailureTable from "../components/FailureTable";
+import FamilyTable from "../components/FamilyTable";
 import KpiDelta from "../components/KpiDelta";
 import { duration, isActive, num, pct } from "../format";
 import { useAsync } from "../hooks";
@@ -115,6 +116,8 @@ export default function CampaignDetail() {
           </div>
         </div>
       )}
+
+      {metrics.data && metrics.data.families.length > 0 && <FamilyTable rows={metrics.data.families} />}
 
       {done && <FailureTable campaignId={id} families={c.families} />}
     </div>
