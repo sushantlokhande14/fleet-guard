@@ -61,6 +61,31 @@ Same-author caveat: the regressions, the simulator and the classifiers were all
 written by the same person, so this measures the pipeline end to end, not how it
 would do on someone else's bugs.
 
+## Scale: one 100,000-drive campaign (May)
+
+```bash
+docker compose run --rm migrate fleetguard campaign create     --baseline drive-2.3.0 --candidate drive-2.4.0-rc1 --count 50000 --seed-start 100000 --run
+```
+
+50,000 scenarios x 2 builds through the whole pipeline (worker, fgsim batch,
+COPY ingest, SQL classifiers, verdict, cluster reports) on a 22-thread desktop:
+
+| phase | wall time |
+|---|---|
+| simulate (fgsim, 22 threads) | 24.2 s (4,134 drives/s) |
+| ingest (100,000 drives, 232,069 events, 421,833 telemetry frames) | 25.7 s |
+| classify + verdict + cluster reports | 2.2 s |
+| end to end | 52.1 s |
+
+Verdict: regression in latency_spike (112 per 1000 scenarios) and
+control_instability (142 per 1000), the same two categories and nearly the same
+rates as the 700-scenario campaign, with 70 disengagements (1.4 per 1000) staying
+under the flag threshold.
+
+The first attempt at this size spent ten minutes in one join during ingest:
+temp staging tables have no statistics, so Postgres picked nested loops. The fix
+(ANALYZE right after each COPY) is in `fleetguard/ingest.py`.
+
 ## Triage workload (proxy, April)
 
 ```bash
