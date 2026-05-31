@@ -37,10 +37,10 @@ def main():
     if args.scenario:
         with open(args.scenario) as f:
             geo = json.load(f)["geometry"]
-        rx, ry = zip(*geo["route"])
+        rx, ry = zip(*geo["route"], strict=True)
         ax_xy.plot(rx, ry, color="0.7", lw=6, label="lane")
         if "map_route" in geo:
-            mx, my = zip(*geo["map_route"])
+            mx, my = zip(*geo["map_route"], strict=True)
             ax_xy.plot(mx, my, color="0.85", lw=2, ls="--", label="prior map")
 
     for path in args.frames:
