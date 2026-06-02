@@ -31,13 +31,18 @@ export const campaignRunning: CampaignSummary = {
   failures: null,
 };
 
-/** Route fetch() calls to canned JSON by URL prefix. */
+/** Use as a route value to answer 404 for that prefix. */
+export const NOT_FOUND = Symbol("404");
+
+/** Route fetch() calls to canned JSON by URL prefix (longest prefix wins). */
 export function routeFetch(routes: Record<string, unknown>) {
   return async (url: string) => {
     const key = Object.keys(routes)
       .sort((a, b) => b.length - a.length)
       .find((k) => url.startsWith(k));
-    if (!key) return { ok: false, status: 404, statusText: "not found", json: async () => ({ detail: url }) };
+    if (!key || routes[key] === NOT_FOUND) {
+      return { ok: false, status: 404, statusText: "not found", json: async () => ({ detail: url }) };
+    }
     return { ok: true, status: 200, statusText: "OK", json: async () => routes[key] };
   };
 }

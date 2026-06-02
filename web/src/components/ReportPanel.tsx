@@ -109,7 +109,7 @@ export default function ReportPanel({ failureId, reproCommand }: Props) {
           default) for the narrative and checks every number and parameter it states against the data.
         </p>
       )}
-      {report && (
+      {report && typeof report.markdown === "string" && (
         <article className="report" data-testid="report">
           <Markdown remarkPlugins={[remarkGfm]}>{report.markdown}</Markdown>
         </article>

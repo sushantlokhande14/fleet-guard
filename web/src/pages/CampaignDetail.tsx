@@ -90,22 +90,31 @@ export default function CampaignDetail() {
             <table>
               <thead>
                 <tr>
+                  <th className="num">failures</th>
                   <th>signature</th>
                   <th>category</th>
-                  <th className="num">failures</th>
                   <th>max severity</th>
                 </tr>
               </thead>
               <tbody>
                 {(clusters.data ?? []).slice(0, 12).map((cl) => (
                   <tr key={cl.signature}>
-                    <td className="mono">
-                      <Link to={`/failures/${cl.example_id}`}>{cl.signature}</Link>
+                    <td className="num">{cl.failures}</td>
+                    <td className="mono" style={{ fontSize: 12 }}>
+                      <Link to={`/failures/${cl.example_id}`} aria-label={cl.signature}>
+                        {/* break long signatures at the slashes, not mid-word */}
+                        {cl.signature.split("/").map((part, i) => (
+                          <span key={i}>
+                            {i > 0 && "/"}
+                            {i > 0 && <wbr />}
+                            {part}
+                          </span>
+                        ))}
+                      </Link>
                     </td>
                     <td>
                       <CategoryBadge category={cl.category} />
                     </td>
-                    <td className="num">{cl.failures}</td>
                     <td>
                       <SeverityBadge severity={cl.severity} />
                     </td>

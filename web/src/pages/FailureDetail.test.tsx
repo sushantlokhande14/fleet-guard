@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { failureDetail } from "../test/failure";
-import { routeFetch } from "../test/fixtures";
+import { NOT_FOUND, routeFetch } from "../test/fixtures";
 import FailureDetail from "./FailureDetail";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -12,6 +12,9 @@ function renderFailure(extra: Record<string, unknown> = {}) {
   const telemetry = { source: "stored", columns: [], baseline: { t: [0, 0.1], v: [1, 2] }, candidate: { t: [0, 0.1], v: [1, 3] } };
   vi.stubGlobal("fetch", vi.fn(routeFetch({
     "/api/failures/41/telemetry": telemetry,
+    // without this the report request would get the failure JSON (prefix match) and crash the page
+    "/api/failures/41/report": NOT_FOUND,
+    "/api/failures/41/scenario": NOT_FOUND,
     "/api/failures/41": failureDetail,
     ...extra,
   })));
