@@ -142,7 +142,7 @@ docker compose run --rm -v "$PWD/docs:/app/docs" migrate fleetguard benchmark --
 | `builds/` | build definitions (`drive-2.3.0` baseline, `2.4.0` release candidates) |
 | `deploy/` | Prometheus rules and tests, Alertmanager, Grafana provisioning and dashboards |
 | `tools/` | dashboard generator, LLM eval, triage-effort counter, e2e smoke test, plotting |
-| `docs/` | [results](docs/RESULTS.md), [architecture notes](docs/ARCHITECTURE.md), benchmark output, LLM eval and example reports |
+| `docs/` | [results](docs/RESULTS.md), [architecture notes](docs/ARCHITECTURE.md), [release gate](docs/RELEASE_GATE.md), benchmark output, LLM eval and example reports |
 
 ## Development
 
