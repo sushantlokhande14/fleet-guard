@@ -60,12 +60,37 @@ failures into a report an engineer can reproduce with one command.
   with promtool unit tests, Alertmanager delivering to the API, and three
   provisioned Grafana dashboards.
 
+## The triage UI
+
+Campaigns with live progress, verdicts and the alerts Alertmanager delivered:
+
+![Campaigns](docs/img/campaigns.png)
+
+A campaign: baseline -> candidate KPIs, failures per category against the flag
+threshold, clusters (one probable bug each) and where in the scenario set the
+regression lives:
+
+![Campaign](docs/img/campaign.png)
+
+A failure: evidence, the parameter change behind it, both drives on one clock,
+and the trajectory map. Here the candidate keeps following the prior map (yellow)
+through a work-zone lane shift while the baseline takes the shifted lane:
+
+![Failure](docs/img/failure.png)
+
+Its report, with the narrative written by a local `qwen2.5:7b` and checked against
+the facts, plus the command that replays the pair:
+
+![Report](docs/img/report.png)
+
 ## Results
 
 All measured, all reproducible; details and caveats in [docs/RESULTS.md](docs/RESULTS.md).
 
 - Seeded-regression benchmark (50 injected bugs, 10 clean controls, held-out
   seeds, 84,000 drives): **37/50 reproduced**, 1/10 controls flagged.
+- One 100,000-drive campaign end to end in 52 s (simulate 24 s, ingest 26 s,
+  classify 2 s) on a 22-thread desktop.
 - LLM narratives on a local `qwen2.5:7b`: 28/30 accepted by the guard (both
   rejections were the guard's fault, since fixed); median 13 s on a laptop GPU.
 - Triage items to open (proxy, not time): 208 flagged scenarios -> 10 cluster
@@ -74,15 +99,24 @@ All measured, all reproducible; details and caveats in [docs/RESULTS.md](docs/RE
 ## Quick start
 
 ```bash
-docker compose up -d --build        # postgres, api :8000, worker, prometheus :9090, alertmanager :9093, grafana :3000
+make up          # or: docker compose up -d --build
+make campaign    # queue drive-2.4.0-rc1 against drive-2.3.0, 700 scenarios
+make smoke       # end-to-end check over HTTP
+```
+
+UI on :8080, API docs on :8000/docs, Grafana on :3000, Prometheus on :9090,
+Alertmanager on :9093. The worker picks the campaign up; 700 scenarios (1,400
+drives) take a few seconds. The release story in `builds/`: rc1 regresses in
+latency and control, rc2 fixes the latency, rc3 fixes the control loop and passes.
+
+CLI equivalents:
+
+```bash
 docker compose run --rm migrate fleetguard campaign create \
     --baseline drive-2.3.0 --candidate drive-2.4.0-rc1 --count 700
 docker compose run --rm migrate fleetguard campaign list
-docker compose run --rm migrate fleetguard campaign show 1
+docker compose run --rm migrate fleetguard campaign show 2
 ```
-
-The worker picks the campaign up; a 700-scenario campaign (1,400 drives) takes a
-few seconds. Then open Grafana on :3000 or the API docs on :8000/docs.
 
 Reports:
 
@@ -103,11 +137,12 @@ docker compose run --rm -v "$PWD/docs:/app/docs" migrate fleetguard benchmark --
 |---|---|
 | `core/` | C++17 simulator, comparison and batch runner (`fgsim`), GoogleTest suite |
 | `fleetguard/` | Python: campaigns, ingestion, classifiers (`classifiers/sql/`), verdicts, repro, benchmark, diagnostics, API, worker, metrics |
+| `web/` | React + TypeScript triage UI (Vite, vitest), served by nginx in compose |
 | `db/migrations/` | Postgres schema and views |
 | `builds/` | build definitions (`drive-2.3.0` baseline, `2.4.0` release candidates) |
 | `deploy/` | Prometheus rules and tests, Alertmanager, Grafana provisioning and dashboards |
-| `tools/` | dashboard generator, LLM eval, triage-effort counter, plotting |
-| `docs/` | results, benchmark output, LLM eval and example reports |
+| `tools/` | dashboard generator, LLM eval, triage-effort counter, e2e smoke test, plotting |
+| `docs/` | [results](docs/RESULTS.md), [architecture notes](docs/ARCHITECTURE.md), benchmark output, LLM eval and example reports |
 
 ## Development
 
@@ -122,5 +157,11 @@ pip install -e ".[dev]"
 FG_FGSIM=build/fgsim FG_TEST_DATABASE_URL=postgresql://... pytest
 ```
 
+```bash
+# UI against a running API
+cd web && npm install && npm run dev      # :5173, proxies /api to :8000
+```
+
 CI runs the core in Release and under ASan/UBSan, the Python suite against a
-Postgres service, ruff, and promtool on the alert rules.
+Postgres service, ruff, promtool on the alert rules, the UI typecheck/tests/build,
+and the smoke test against a freshly built compose stack.
