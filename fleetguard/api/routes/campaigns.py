@@ -4,9 +4,11 @@ from typing import Any
 
 import psycopg
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
 from ... import campaigns as fgcampaigns
+from ...summary import campaign_markdown
 from ..deps import Conn, Sim
 
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
@@ -77,3 +79,10 @@ def metrics(campaign_id: int, conn: Conn) -> dict:
     families = conn.execute("SELECT * FROM campaign_family_metrics WHERE campaign_id = %s ORDER BY family, role",
                             (campaign_id,)).fetchall()
     return {"roles": roles, "families": families}
+
+
+@router.get("/{campaign_id}/summary.md", response_class=PlainTextResponse)
+def summary(campaign_id: int, conn: Conn, ui: str | None = None) -> str:
+    """Verdict, KPIs and top clusters as markdown (for a PR comment or a CI job summary)."""
+    get_or_404(conn, campaign_id)
+    return campaign_markdown(conn, campaign_id, ui_base=ui)

@@ -185,3 +185,10 @@ def test_report_api_uses_llm_factory(db, db_url, fgsim, finished):
         r = c.post(f"/api/failures/{fid}/report").json()
     assert len(calls) == 1
     assert r["generator"] == "template" and "503" in r["meta"]["llm_error"]
+
+
+def test_summary_markdown(client, finished):
+    r = client.get(f"/api/campaigns/{finished}/summary.md?ui=http://ui")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/plain")
+    assert "**REGRESSION**" in r.text and f"[#{finished}](http://ui/campaigns/{finished})" in r.text
+    assert client.get("/api/campaigns/999/summary.md").status_code == 404

@@ -144,6 +144,25 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_gate(args: argparse.Namespace) -> int:
+    """Run a campaign now and fail (exit 1) if the candidate regressed. For release pipelines."""
+    from .summary import campaign_markdown
+
+    with fgdb.session() as conn:
+        cid = campaigns.create(conn, baseline=args.baseline, candidate=args.candidate, scenario_count=args.count,
+                               seed_start=args.seed_start, name=f"gate {args.candidate}",
+                               families=args.families.split(",") if args.families else None)
+    campaigns.run(cid, after_ingest=post_process)
+    with fgdb.session() as conn:
+        md = campaign_markdown(conn, cid, ui_base=args.ui)
+        verdict = campaigns.get(conn, cid)["verdict"]
+    print(md)
+    if args.summary:
+        with open(args.summary, "a", encoding="utf-8") as f:  # append: GITHUB_STEP_SUMMARY is shared
+            f.write(md)
+    return 1 if verdict["status"] == "regression" else 0
+
+
 def cmd_worker(args: argparse.Namespace) -> int:
     from . import worker
 
@@ -210,6 +229,16 @@ def build_parser() -> argparse.ArgumentParser:
     rp = sub.add_parser("repro", help="replay a failure and check it matches what was stored")
     rp.add_argument("failure_id", type=int)
     rp.set_defaults(func=cmd_repro)
+
+    gt = sub.add_parser("gate", help="run a campaign now; exit 1 if the candidate regressed")
+    gt.add_argument("--baseline", required=True)
+    gt.add_argument("--candidate", required=True)
+    gt.add_argument("--count", type=int, default=700)
+    gt.add_argument("--families")
+    gt.add_argument("--seed-start", type=int, default=0)
+    gt.add_argument("--summary", help="append the markdown summary to this file (e.g. $GITHUB_STEP_SUMMARY)")
+    gt.add_argument("--ui", help="base URL of the UI, for links in the summary")
+    gt.set_defaults(func=cmd_gate)
 
     rep = sub.add_parser("report", help="write a diagnostic report for one failure")
     rep.add_argument("failure_id", type=int)
