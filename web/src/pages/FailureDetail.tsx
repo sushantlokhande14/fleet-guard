@@ -25,6 +25,13 @@ const METRICS: [string, string][] = [
   ["hard_brakes", "hard brakes"],
 ];
 
+const GRAFANA = import.meta.env.VITE_GRAFANA_URL ?? "http://localhost:3000";
+
+/** The provisioned failure-telemetry dashboard with this failure pre-selected. */
+export function grafanaUrl(campaignId: number, failureId: number): string {
+  return `${GRAFANA}/d/fleetguard-failure/fleet-guard-failure-telemetry?var-campaign=${campaignId}&var-failure=${failureId}`;
+}
+
 function show(v: unknown): string {
   if (v === null || v === undefined || v === "") return "-";
   if (typeof v === "number") return num(v, 3);
@@ -94,6 +101,10 @@ export function Overview({ d }: { d: Detail }) {
           · {d.scenario.family} seed {d.scenario.seed} · {d.scenario.weather} · {num(d.scenario.route_length_m, 0)} m
           {f.first_t !== null && <> · first symptom at {num(f.first_t, 1)} s</>}
           {f.secondary.length > 0 && <> · also {f.secondary.map((s) => CATEGORY_LABEL[s]).join(", ")}</>}
+          {" · "}
+          <a href={grafanaUrl(d.campaign.id, f.id)} target="_blank" rel="noreferrer">
+            open in Grafana
+          </a>
         </div>
       </div>
 

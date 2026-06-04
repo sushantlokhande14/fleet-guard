@@ -36,6 +36,8 @@ describe("Failure detail", () => {
       "/campaigns/2");
     expect(screen.getByText("control.actuator_delay_ms")).toBeInTheDocument();
     expect(screen.getByText("0.169 -> 0.305")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "open in Grafana" }).getAttribute("href"))
+      .toContain("fleetguard-failure/fleet-guard-failure-telemetry?var-campaign=2&var-failure=41");
   });
 
   it("merges both timelines and hides routine latency jitter", async () => {

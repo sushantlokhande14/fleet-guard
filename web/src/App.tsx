@@ -38,7 +38,8 @@ export default function App() {
           <NavLink to="/builds">Builds</NavLink>
         </nav>
         <div className="spacer" />
-        <a href="http://localhost:3000" target="_blank" rel="noreferrer" className="muted">
+        <a href={import.meta.env.VITE_GRAFANA_URL ?? "http://localhost:3000"} target="_blank" rel="noreferrer"
+          className="muted">
           Grafana
         </a>
       </header>
