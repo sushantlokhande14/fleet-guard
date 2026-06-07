@@ -71,6 +71,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Dashboards match their generator
+        run: |
+          python3 tools/gen_dashboards.py
+          git diff --exit-code deploy/grafana/dashboards
       - name: Check Prometheus config and alert rules
         run: |
           docker run --rm -v "$PWD/deploy/prometheus:/etc/prometheus" --entrypoint promtool \
