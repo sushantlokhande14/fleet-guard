@@ -17,7 +17,7 @@ from typing import Any
 import psycopg
 from psycopg.types.json import Jsonb
 
-CLASSIFIER_VERSION = "2026.03"
+CLASSIFIER_VERSION = "2026.10"
 CATEGORIES = ("disengagement", "latency_spike", "route_deviation", "perception_error", "control_instability")
 
 # tie-break when two causes start at the same instant: upstream modules first
