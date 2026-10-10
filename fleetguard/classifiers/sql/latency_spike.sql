@@ -7,6 +7,11 @@
 -- whole-drive totals blamed latency for regressions that only changed drive
 -- length (2026.03 benchmark, control_instability.integral.severe).
 --
+-- A watchdog trip only counts as latency when the candidate also missed more
+-- deadlines in that window. Otherwise the planner was no slower and the trip comes
+-- from a policy change (a tighter watchdog), which the disengagement classifier
+-- reports (2026.03 benchmark, disengagement.watchdog.severe).
+--
 -- A p99 shift counts when both drives completed or new near-budget cycles back it
 -- up: over a few hundred cycles p99 is about the third-worst cycle.
 WITH win AS MATERIALIZED (
@@ -58,4 +63,5 @@ WHERE pd.campaign_id = %(campaign)s
            AND pd.cand_p99_ms - pd.base_p99_ms >= %(latency_p99_delta_ms)s
            AND (coalesce(sp.n, 0) >= %(latency_min_new_events)s
                 OR (pd.base_outcome = 'completed' AND pd.cand_outcome = 'completed')))
-       OR (pd.cand_reason = 'planner_watchdog' AND pd.base_reason <> 'planner_watchdog'))
+       OR (pd.cand_reason = 'planner_watchdog' AND pd.base_reason <> 'planner_watchdog'
+           AND coalesce(m.cand_n, 0) > coalesce(m.base_n, 0)))

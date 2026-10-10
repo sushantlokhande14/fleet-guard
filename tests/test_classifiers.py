@@ -113,3 +113,22 @@ def test_failures_are_stored_once_per_scenario(db, classified):
     assert r["classifier_version"] == classifiers.CLASSIFIER_VERSION
     assert r["signature"].startswith("perception_error/")
     assert "recall" in r["evidence"]
+
+
+@pytest.mark.fgsim
+def test_watchdog_policy_change_is_a_disengagement_not_latency(db, db_url, fgsim, tmp_path):
+    """A tighter watchdog trips on the same spikes the baseline survives: the planner
+    is no slower, so it must not be reported as a latency regression."""
+    repo.sync_builds(db, Registry(defaults=fgsim.defaults()))
+    out = {}
+    for name, knob in {"watchdog": {"planner": {"watchdog_misses": 1}},
+                       "slower": {"planner": {"spike_prob": 0.04}}}.items():
+        repo.upsert_build(db, f"k-{name}", {"name": f"k-{name}", **knob}, {})
+        cid = campaigns.create(db, baseline="drive-2.3.0", candidate=f"k-{name}", scenario_count=140)
+        db.commit()
+        campaigns.run(cid, url=db_url, sim=fgsim, threads=4, runs_dir=tmp_path)
+        out[name] = collections.Counter(f.category for f in classifiers.classify_campaign(db, cid))
+        db.commit()
+    assert out["watchdog"].most_common(1)[0][0] == "disengagement"
+    assert out["watchdog"]["latency_spike"] == 0
+    assert out["slower"].most_common(1)[0][0] == "latency_spike"
