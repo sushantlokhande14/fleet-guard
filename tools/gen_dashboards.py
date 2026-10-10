@@ -60,7 +60,8 @@ class Board:
     def write(self) -> Path:
         OUT.mkdir(parents=True, exist_ok=True)
         path = OUT / f"{self.d['uid']}.json"
-        path.write_text(json.dumps(self.d, indent=2) + "\n")
+        # always LF, so the CI drift check sees the same bytes on any OS
+        path.write_text(json.dumps(self.d, indent=2) + "\n", newline="\n")
         return path
 
 
