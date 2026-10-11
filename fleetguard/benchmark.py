@@ -25,6 +25,7 @@ from typing import Any
 from . import campaigns, repo, repro, seeded
 from . import db as fgdb
 from .builds import deep_merge
+from .classifiers import CLASSIFIER_VERSION
 from .pipeline import post_process
 from .sim import Fgsim
 
@@ -33,7 +34,7 @@ BASELINE = "drive-2.3.0"
 
 
 def run_case(url: str, sim: Fgsim, case: seeded.SeededCase, *, scenario_count: int, run_id: str,
-             threads: int | None = None) -> dict[str, Any]:
+             threads: int | None = None, seed_start: int = HELD_OUT_SEED_START) -> dict[str, Any]:
     name = f"seeded/{case.id}"
     with fgdb.session(url) as conn:
         base = repo.get_build(conn, BASELINE)
@@ -42,7 +43,7 @@ def run_case(url: str, sim: Fgsim, case: seeded.SeededCase, *, scenario_count: i
         params = deep_merge(sim.defaults(), overrides)
         repo.upsert_build(conn, name, overrides, params, description=case.mechanism, parent=BASELINE)
         cid = campaigns.create(conn, baseline=BASELINE, candidate=name, scenario_count=scenario_count,
-                               seed_start=HELD_OUT_SEED_START, name=f"benchmark {case.id}",
+                               seed_start=seed_start, name=f"benchmark {case.id}",
                                tags={"benchmark": run_id, "case": case.id, "expected": case.category})
     t0 = time.monotonic()
     campaigns.run(cid, url=url, sim=sim, threads=threads, after_ingest=post_process)
@@ -94,20 +95,23 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def run(url: str, *, scenario_count: int = 700, case_filter: str = "", threads: int | None = None,
-        sim: Fgsim | None = None, on_case: Callable[[dict], None] | None = None) -> dict[str, Any]:
+        sim: Fgsim | None = None, on_case: Callable[[dict], None] | None = None,
+        seed_start: int = HELD_OUT_SEED_START) -> dict[str, Any]:
     sim = sim or Fgsim()
     run_id = uuid.uuid4().hex[:8]
     cases = [c for c in seeded.all_cases() if c.id.startswith(case_filter)]
     rows = []
     for case in cases:
-        row = run_case(url, sim, case, scenario_count=scenario_count, run_id=run_id, threads=threads)
+        row = run_case(url, sim, case, scenario_count=scenario_count, run_id=run_id, threads=threads,
+                       seed_start=seed_start)
         rows.append(row)
         if on_case:
             on_case(row)
     return {
         "run_id": run_id,
         "scenarios_per_case": scenario_count,
-        "seed_start": HELD_OUT_SEED_START,
+        "seed_start": seed_start,
+        "classifier_version": CLASSIFIER_VERSION,
         "drives": 2 * scenario_count * len(cases),
         "cases": rows,
         "summary": summarize(rows),
@@ -118,7 +122,8 @@ def to_markdown(result: dict[str, Any]) -> str:
     s = result["summary"]
     lines = [
         f"Benchmark run `{result['run_id']}`: {len(result['cases'])} campaigns, "
-        f"{result['scenarios_per_case']} scenarios each (seeds from {result['seed_start']}), "
+        f"{result['scenarios_per_case']} scenarios each (seeds from {result['seed_start']}, "
+        f"classifiers {result.get('classifier_version', '?')}), "
         f"{result['drives']:,} simulated drives.",
         "",
         "| | result |",

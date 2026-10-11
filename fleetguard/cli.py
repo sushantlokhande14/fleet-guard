@@ -106,7 +106,7 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         print(f"{r['case']:45s} {verdict}", flush=True)
 
     result = benchmark.run(get_settings().database_url, scenario_count=args.count, case_filter=args.cases,
-                           on_case=show)
+                           on_case=show, seed_start=args.seed_start)
     benchmark.write(result, args.out)
     s = result["summary"]
     print(f"\nreproduced {s['reproduced']['hit']}/{s['reproduced']['n']}"
@@ -224,6 +224,8 @@ def build_parser() -> argparse.ArgumentParser:
     bm.add_argument("--count", type=int, default=700, help="scenarios per case")
     bm.add_argument("--cases", default="", help="only cases whose id starts with this")
     bm.add_argument("--out", default="docs/benchmark")
+    bm.add_argument("--seed-start", type=int, default=benchmark.HELD_OUT_SEED_START,
+                    help="first scenario seed (use a range no tuning has seen)")
     bm.set_defaults(func=cmd_benchmark)
 
     rp = sub.add_parser("repro", help="replay a failure and check it matches what was stored")
