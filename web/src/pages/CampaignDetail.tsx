@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { api, type RoleMetrics } from "../api";
 import { CategoryBadge, Progress, SeverityBadge, StatusBadge, VerdictBadge } from "../components/Badges";
 import CategoryBars from "../components/CategoryBars";
+import CopySummary from "../components/CopySummary";
 import FailureTable from "../components/FailureTable";
 import FamilyTable from "../components/FamilyTable";
 import KpiDelta from "../components/KpiDelta";
@@ -52,6 +53,8 @@ export default function CampaignDetail() {
           </h1>
           <StatusBadge status={c.status} />
           <VerdictBadge verdict={v?.status} />
+          <div className="spacer" style={{ flex: 1 }} />
+          {v && <CopySummary campaignId={c.id} />}
         </div>
         {isActive(c.status) && <Progress value={c.progress} />}
         {c.error && <div className="error mono">{c.error}</div>}

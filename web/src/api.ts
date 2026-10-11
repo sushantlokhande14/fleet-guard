@@ -257,4 +257,9 @@ export const api = {
   generateReport: (id: number, llm: boolean) =>
     request<Report>(`/api/failures/${id}/report?llm=${llm}`, { method: "POST" }),
   alerts: () => request<Alert[]>("/api/alerts"),
+  summary: async (id: number, uiBase: string) => {
+    const res = await fetch(`/api/campaigns/${id}/summary.md?ui=${encodeURIComponent(uiBase)}`);
+    if (!res.ok) throw new ApiError(res.status, res.statusText);
+    return res.text();
+  },
 };
