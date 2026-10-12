@@ -1,0 +1,1178 @@
+{
+  "run_id": "545f600f",
+  "scenarios_per_case": 700,
+  "seed_start": 300000,
+  "classifier_version": "2026.10",
+  "drives": 84000,
+  "cases": [
+    {
+      "case": "perception_error.far_pedestrians.moderate",
+      "category": "perception_error",
+      "level": "moderate",
+      "mechanism": "pedestrian detector loses recall beyond 20 m",
+      "campaign_id": 164,
+      "status": "regression",
+      "flagged": [
+        "perception_error",
+        "control_instability"
+      ],
+      "top_category": "perception_error",
+      "failures": 63,
+      "seconds": 2.5,
+      "category_failures": 43,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "perception_error.far_pedestrians.severe",
+      "category": "perception_error",
+      "level": "severe",
+      "mechanism": "pedestrian detector loses recall beyond 20 m",
+      "campaign_id": 165,
+      "status": "regression",
+      "flagged": [
+        "perception_error",
+        "disengagement"
+      ],
+      "top_category": "perception_error",
+      "failures": 97,
+      "seconds": 2.5,
+      "category_failures": 63,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "perception_error.weather_range.moderate",
+      "category": "perception_error",
+      "level": "moderate",
+      "mechanism": "camera exposure change shortens range in rain and fog",
+      "campaign_id": 166,
+      "status": "regression",
+      "flagged": [
+        "perception_error",
+        "control_instability"
+      ],
+      "top_category": "perception_error",
+      "failures": 53,
+      "seconds": 2.6,
+      "category_failures": 49,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "perception_error.weather_range.severe",
+      "category": "perception_error",
+      "level": "severe",
+      "mechanism": "camera exposure change shortens range in rain and fog",
+      "campaign_id": 167,
+      "status": "regression",
+      "flagged": [
+        "perception_error",
+        "control_instability"
+      ],
+      "top_category": "perception_error",
+      "failures": 89,
+      "seconds": 3.2,
+      "category_failures": 82,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "perception_error.phantoms.moderate",
+      "category": "perception_error",
+      "level": "moderate",
+      "mechanism": "radar clutter filter regression adds ghost objects",
+      "campaign_id": 168,
+      "status": "regression",
+      "flagged": [
+        "perception_error"
+      ],
+      "top_category": "perception_error",
+      "failures": 554,
+      "seconds": 8.3,
+      "category_failures": 551,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "perception_error.phantoms.severe",
+      "category": "perception_error",
+      "level": "severe",
+      "mechanism": "radar clutter filter regression adds ghost objects",
+      "campaign_id": 169,
+      "status": "regression",
+      "flagged": [
+        "perception_error",
+        "control_instability"
+      ],
+      "top_category": "perception_error",
+      "failures": 686,
+      "seconds": 9.5,
+      "category_failures": 682,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "perception_error.range_calibration.moderate",
+      "category": "perception_error",
+      "level": "moderate",
+      "mechanism": "lidar extrinsics overestimate range",
+      "campaign_id": 170,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 9,
+      "seconds": 4.3,
+      "category_failures": 2,
+      "detected": false,
+      "top1": false,
+      "repro_ok": true,
+      "reproduced": false
+    },
+    {
+      "case": "perception_error.range_calibration.severe",
+      "category": "perception_error",
+      "level": "severe",
+      "mechanism": "lidar extrinsics overestimate range",
+      "campaign_id": 171,
+      "status": "regression",
+      "flagged": [
+        "disengagement"
+      ],
+      "top_category": "disengagement",
+      "failures": 11,
+      "seconds": 8.0,
+      "category_failures": 3,
+      "detected": false,
+      "top1": false,
+      "repro_ok": true,
+      "reproduced": false
+    },
+    {
+      "case": "perception_error.slow_confirmation.moderate",
+      "category": "perception_error",
+      "level": "moderate",
+      "mechanism": "tracker needs more hits before publishing a track",
+      "campaign_id": 172,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 4,
+      "seconds": 3.3,
+      "category_failures": 2,
+      "detected": false,
+      "top1": false,
+      "repro_ok": true,
+      "reproduced": false
+    },
+    {
+      "case": "perception_error.slow_confirmation.severe",
+      "category": "perception_error",
+      "level": "severe",
+      "mechanism": "tracker needs more hits before publishing a track",
+      "campaign_id": 173,
+      "status": "regression",
+      "flagged": [
+        "perception_error"
+      ],
+      "top_category": "perception_error",
+      "failures": 26,
+      "seconds": 4.8,
+      "category_failures": 23,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.spike_rate.moderate",
+      "category": "latency_spike",
+      "level": "moderate",
+      "mechanism": "GC pauses in the planning process",
+      "campaign_id": 174,
+      "status": "regression",
+      "flagged": [
+        "latency_spike"
+      ],
+      "top_category": "latency_spike",
+      "failures": 533,
+      "seconds": 9.3,
+      "category_failures": 533,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.spike_rate.severe",
+      "category": "latency_spike",
+      "level": "severe",
+      "mechanism": "GC pauses in the planning process",
+      "campaign_id": 175,
+      "status": "regression",
+      "flagged": [
+        "latency_spike"
+      ],
+      "top_category": "latency_spike",
+      "failures": 698,
+      "seconds": 9.5,
+      "category_failures": 698,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.spike_size.moderate",
+      "category": "latency_spike",
+      "level": "moderate",
+      "mechanism": "lock contention makes rare stalls longer",
+      "campaign_id": 176,
+      "status": "regression",
+      "flagged": [
+        "latency_spike"
+      ],
+      "top_category": "latency_spike",
+      "failures": 7,
+      "seconds": 1.8,
+      "category_failures": 7,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.spike_size.severe",
+      "category": "latency_spike",
+      "level": "severe",
+      "mechanism": "lock contention makes rare stalls longer",
+      "campaign_id": 177,
+      "status": "regression",
+      "flagged": [
+        "latency_spike"
+      ],
+      "top_category": "latency_spike",
+      "failures": 8,
+      "seconds": 1.8,
+      "category_failures": 8,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.per_object.moderate",
+      "category": "latency_spike",
+      "level": "moderate",
+      "mechanism": "fusion work moved onto the planning thread",
+      "campaign_id": 178,
+      "status": "regression",
+      "flagged": [
+        "latency_spike"
+      ],
+      "top_category": "latency_spike",
+      "failures": 27,
+      "seconds": 1.8,
+      "category_failures": 26,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.per_object.severe",
+      "category": "latency_spike",
+      "level": "severe",
+      "mechanism": "fusion work moved onto the planning thread",
+      "campaign_id": 179,
+      "status": "regression",
+      "flagged": [
+        "latency_spike"
+      ],
+      "top_category": "latency_spike",
+      "failures": 96,
+      "seconds": 2.0,
+      "category_failures": 96,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.mean_creep.moderate",
+      "category": "latency_spike",
+      "level": "moderate",
+      "mechanism": "new cost terms slow every cycle",
+      "campaign_id": 180,
+      "status": "regression",
+      "flagged": [
+        "latency_spike",
+        "control_instability"
+      ],
+      "top_category": "latency_spike",
+      "failures": 274,
+      "seconds": 3.9,
+      "category_failures": 262,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.mean_creep.severe",
+      "category": "latency_spike",
+      "level": "severe",
+      "mechanism": "new cost terms slow every cycle",
+      "campaign_id": 181,
+      "status": "regression",
+      "flagged": [
+        "latency_spike"
+      ],
+      "top_category": "latency_spike",
+      "failures": 699,
+      "seconds": 4.4,
+      "category_failures": 698,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.jitter.moderate",
+      "category": "latency_spike",
+      "level": "moderate",
+      "mechanism": "planner shares a core with logging",
+      "campaign_id": 182,
+      "status": "regression",
+      "flagged": [
+        "latency_spike",
+        "control_instability"
+      ],
+      "top_category": "latency_spike",
+      "failures": 170,
+      "seconds": 2.8,
+      "category_failures": 164,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "latency_spike.jitter.severe",
+      "category": "latency_spike",
+      "level": "severe",
+      "mechanism": "planner shares a core with logging",
+      "campaign_id": 183,
+      "status": "regression",
+      "flagged": [
+        "latency_spike"
+      ],
+      "top_category": "latency_spike",
+      "failures": 696,
+      "seconds": 10.0,
+      "category_failures": 693,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "route_deviation.curve_offset.moderate",
+      "category": "route_deviation",
+      "level": "moderate",
+      "mechanism": "map curvature bug shifts the path outward on bends",
+      "campaign_id": 184,
+      "status": "regression",
+      "flagged": [
+        "route_deviation",
+        "control_instability"
+      ],
+      "top_category": "route_deviation",
+      "failures": 265,
+      "seconds": 4.7,
+      "category_failures": 200,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "route_deviation.curve_offset.severe",
+      "category": "route_deviation",
+      "level": "severe",
+      "mechanism": "map curvature bug shifts the path outward on bends",
+      "campaign_id": 185,
+      "status": "regression",
+      "flagged": [
+        "route_deviation",
+        "control_instability"
+      ],
+      "top_category": "route_deviation",
+      "failures": 267,
+      "seconds": 5.0,
+      "category_failures": 247,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "route_deviation.lateral_bias.moderate",
+      "category": "route_deviation",
+      "level": "moderate",
+      "mechanism": "IMU mounting offset biases lane centring",
+      "campaign_id": 186,
+      "status": "regression",
+      "flagged": [
+        "control_instability",
+        "route_deviation",
+        "disengagement",
+        "perception_error"
+      ],
+      "top_category": "control_instability",
+      "failures": 89,
+      "seconds": 10.5,
+      "category_failures": 36,
+      "detected": true,
+      "top1": false,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "route_deviation.lateral_bias.severe",
+      "category": "route_deviation",
+      "level": "severe",
+      "mechanism": "IMU mounting offset biases lane centring",
+      "campaign_id": 187,
+      "status": "regression",
+      "flagged": [
+        "route_deviation"
+      ],
+      "top_category": "route_deviation",
+      "failures": 700,
+      "seconds": 9.6,
+      "category_failures": 700,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "route_deviation.corner_cutting.moderate",
+      "category": "route_deviation",
+      "level": "moderate",
+      "mechanism": "lookahead retune cuts corners",
+      "campaign_id": 188,
+      "status": "regression",
+      "flagged": [
+        "route_deviation"
+      ],
+      "top_category": "route_deviation",
+      "failures": 8,
+      "seconds": 2.5,
+      "category_failures": 8,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "route_deviation.corner_cutting.severe",
+      "category": "route_deviation",
+      "level": "severe",
+      "mechanism": "lookahead retune cuts corners",
+      "campaign_id": 189,
+      "status": "regression",
+      "flagged": [
+        "route_deviation"
+      ],
+      "top_category": "route_deviation",
+      "failures": 275,
+      "seconds": 5.3,
+      "category_failures": 274,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "route_deviation.gentle_curve_offset.moderate",
+      "category": "route_deviation",
+      "level": "moderate",
+      "mechanism": "curvature bug also fires on gentle bends",
+      "campaign_id": 190,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 250,
+      "seconds": 7.1,
+      "category_failures": 0,
+      "detected": false,
+      "top1": false,
+      "repro_ok": false,
+      "reproduced": false
+    },
+    {
+      "case": "route_deviation.gentle_curve_offset.severe",
+      "category": "route_deviation",
+      "level": "severe",
+      "mechanism": "curvature bug also fires on gentle bends",
+      "campaign_id": 191,
+      "status": "regression",
+      "flagged": [
+        "route_deviation"
+      ],
+      "top_category": "route_deviation",
+      "failures": 393,
+      "seconds": 7.3,
+      "category_failures": 393,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "route_deviation.stale_map.severe",
+      "category": "route_deviation",
+      "level": "severe",
+      "mechanism": "live lane updates disabled: follows the prior map through work zones",
+      "campaign_id": 192,
+      "status": "regression",
+      "flagged": [
+        "route_deviation"
+      ],
+      "top_category": "route_deviation",
+      "failures": 100,
+      "seconds": 3.5,
+      "category_failures": 100,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "route_deviation.lateral_bias.subtle",
+      "category": "route_deviation",
+      "level": "moderate",
+      "mechanism": "small calibration offset",
+      "campaign_id": 193,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 38,
+      "seconds": 3.1,
+      "category_failures": 0,
+      "detected": false,
+      "top1": false,
+      "repro_ok": false,
+      "reproduced": false
+    },
+    {
+      "case": "control_instability.steer_gain.moderate",
+      "category": "control_instability",
+      "level": "moderate",
+      "mechanism": "steering gain retuned on the test track",
+      "campaign_id": 194,
+      "status": "regression",
+      "flagged": [
+        "route_deviation"
+      ],
+      "top_category": "route_deviation",
+      "failures": 12,
+      "seconds": 2.3,
+      "category_failures": 0,
+      "detected": false,
+      "top1": false,
+      "repro_ok": false,
+      "reproduced": false
+    },
+    {
+      "case": "control_instability.steer_gain.severe",
+      "category": "control_instability",
+      "level": "severe",
+      "mechanism": "steering gain retuned on the test track",
+      "campaign_id": 195,
+      "status": "regression",
+      "flagged": [
+        "route_deviation"
+      ],
+      "top_category": "route_deviation",
+      "failures": 99,
+      "seconds": 2.8,
+      "category_failures": 0,
+      "detected": false,
+      "top1": false,
+      "repro_ok": false,
+      "reproduced": false
+    },
+    {
+      "case": "control_instability.actuator_delay.moderate",
+      "category": "control_instability",
+      "level": "moderate",
+      "mechanism": "CAN gateway firmware adds latency",
+      "campaign_id": 196,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 68,
+      "seconds": 4.8,
+      "category_failures": 67,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "control_instability.actuator_delay.severe",
+      "category": "control_instability",
+      "level": "severe",
+      "mechanism": "CAN gateway firmware adds latency",
+      "campaign_id": 197,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 211,
+      "seconds": 8.8,
+      "category_failures": 209,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "control_instability.short_lookahead.moderate",
+      "category": "control_instability",
+      "level": "moderate",
+      "mechanism": "lookahead shortened for tighter tracking",
+      "campaign_id": 198,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 1,
+      "seconds": 1.9,
+      "category_failures": 1,
+      "detected": false,
+      "top1": false,
+      "repro_ok": true,
+      "reproduced": false
+    },
+    {
+      "case": "control_instability.short_lookahead.severe",
+      "category": "control_instability",
+      "level": "severe",
+      "mechanism": "lookahead shortened for tighter tracking",
+      "campaign_id": 199,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 42,
+      "seconds": 2.4,
+      "category_failures": 42,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "control_instability.speed_gain.moderate",
+      "category": "control_instability",
+      "level": "moderate",
+      "mechanism": "speed loop made more aggressive",
+      "campaign_id": 200,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 46,
+      "seconds": 4.1,
+      "category_failures": 44,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "control_instability.speed_gain.severe",
+      "category": "control_instability",
+      "level": "severe",
+      "mechanism": "speed loop made more aggressive",
+      "campaign_id": 201,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 156,
+      "seconds": 7.0,
+      "category_failures": 154,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "control_instability.integral.moderate",
+      "category": "control_instability",
+      "level": "moderate",
+      "mechanism": "speed integral gain raised, windup",
+      "campaign_id": 202,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 1,
+      "seconds": 2.2,
+      "category_failures": 0,
+      "detected": false,
+      "top1": false,
+      "repro_ok": false,
+      "reproduced": false
+    },
+    {
+      "case": "control_instability.integral.severe",
+      "category": "control_instability",
+      "level": "severe",
+      "mechanism": "speed integral gain raised, windup",
+      "campaign_id": 203,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 2,
+      "seconds": 2.7,
+      "category_failures": 1,
+      "detected": false,
+      "top1": false,
+      "repro_ok": true,
+      "reproduced": false
+    },
+    {
+      "case": "disengagement.headway.moderate",
+      "category": "disengagement",
+      "level": "moderate",
+      "mechanism": "following distance shortened",
+      "campaign_id": 204,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 62,
+      "seconds": 7.5,
+      "category_failures": 0,
+      "detected": false,
+      "top1": false,
+      "repro_ok": false,
+      "reproduced": false
+    },
+    {
+      "case": "disengagement.headway.severe",
+      "category": "disengagement",
+      "level": "severe",
+      "mechanism": "following distance shortened",
+      "campaign_id": 205,
+      "status": "regression",
+      "flagged": [
+        "control_instability",
+        "disengagement"
+      ],
+      "top_category": "control_instability",
+      "failures": 270,
+      "seconds": 9.3,
+      "category_failures": 56,
+      "detected": true,
+      "top1": false,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "disengagement.ped_yield.moderate",
+      "category": "disengagement",
+      "level": "moderate",
+      "mechanism": "crossing-pedestrian prediction shortened or removed",
+      "campaign_id": 206,
+      "status": "regression",
+      "flagged": [
+        "disengagement",
+        "control_instability"
+      ],
+      "top_category": "disengagement",
+      "failures": 28,
+      "seconds": 2.2,
+      "category_failures": 13,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "disengagement.ped_yield.severe",
+      "category": "disengagement",
+      "level": "severe",
+      "mechanism": "crossing-pedestrian prediction shortened or removed",
+      "campaign_id": 207,
+      "status": "regression",
+      "flagged": [
+        "disengagement",
+        "control_instability",
+        "perception_error"
+      ],
+      "top_category": "disengagement",
+      "failures": 73,
+      "seconds": 2.6,
+      "category_failures": 48,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "disengagement.cut_in.moderate",
+      "category": "disengagement",
+      "level": "moderate",
+      "mechanism": "cut-in prediction shortened or removed",
+      "campaign_id": 208,
+      "status": "regression",
+      "flagged": [
+        "disengagement"
+      ],
+      "top_category": "disengagement",
+      "failures": 12,
+      "seconds": 2.8,
+      "category_failures": 12,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "disengagement.cut_in.severe",
+      "category": "disengagement",
+      "level": "severe",
+      "mechanism": "cut-in prediction shortened or removed",
+      "campaign_id": 209,
+      "status": "regression",
+      "flagged": [
+        "disengagement"
+      ],
+      "top_category": "disengagement",
+      "failures": 24,
+      "seconds": 2.9,
+      "category_failures": 21,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "disengagement.brake_cap.moderate",
+      "category": "disengagement",
+      "level": "moderate",
+      "mechanism": "planner deceleration capped",
+      "campaign_id": 210,
+      "status": "regression",
+      "flagged": [
+        "disengagement"
+      ],
+      "top_category": "disengagement",
+      "failures": 8,
+      "seconds": 3.5,
+      "category_failures": 4,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "disengagement.brake_cap.severe",
+      "category": "disengagement",
+      "level": "severe",
+      "mechanism": "planner deceleration capped",
+      "campaign_id": 211,
+      "status": "regression",
+      "flagged": [
+        "disengagement"
+      ],
+      "top_category": "disengagement",
+      "failures": 24,
+      "seconds": 6.6,
+      "category_failures": 18,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "disengagement.watchdog.moderate",
+      "category": "disengagement",
+      "level": "moderate",
+      "mechanism": "watchdog tolerance tightened",
+      "campaign_id": 212,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 1,
+      "seconds": 1.8,
+      "category_failures": 1,
+      "detected": false,
+      "top1": false,
+      "repro_ok": true,
+      "reproduced": false
+    },
+    {
+      "case": "disengagement.watchdog.severe",
+      "category": "disengagement",
+      "level": "severe",
+      "mechanism": "watchdog tolerance tightened",
+      "campaign_id": 213,
+      "status": "regression",
+      "flagged": [
+        "disengagement",
+        "control_instability",
+        "perception_error"
+      ],
+      "top_category": "disengagement",
+      "failures": 467,
+      "seconds": 7.3,
+      "category_failures": 424,
+      "detected": true,
+      "top1": true,
+      "repro_ok": true,
+      "reproduced": true
+    },
+    {
+      "case": "clean.identical",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "version bump, no parameter change",
+      "campaign_id": 214,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 0,
+      "seconds": 1.9,
+      "passed": true
+    },
+    {
+      "case": "clean.max_accel",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "slightly stronger launch",
+      "campaign_id": 215,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 4,
+      "seconds": 2.7,
+      "passed": true
+    },
+    {
+      "case": "clean.comfort_decel",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "comfort decel 2.5 -> 2.6",
+      "campaign_id": 216,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 0,
+      "seconds": 2.1,
+      "passed": true
+    },
+    {
+      "case": "clean.perception_latency",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "+2 ms sensor latency",
+      "campaign_id": 217,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 0,
+      "seconds": 1.9,
+      "passed": true
+    },
+    {
+      "case": "clean.position_noise",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "noise sigma 0.12 -> 0.13 m",
+      "campaign_id": 218,
+      "status": "regression",
+      "flagged": [
+        "control_instability"
+      ],
+      "top_category": "control_instability",
+      "failures": 5,
+      "seconds": 2.4,
+      "passed": false
+    },
+    {
+      "case": "clean.planner_mean",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "+1 ms planner mean",
+      "campaign_id": 219,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 0,
+      "seconds": 1.9,
+      "passed": true
+    },
+    {
+      "case": "clean.lookahead_min",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "lookahead floor 6.0 -> 6.5 m",
+      "campaign_id": 220,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 0,
+      "seconds": 2.0,
+      "passed": true
+    },
+    {
+      "case": "clean.jerk_limit",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "jerk limit 12 -> 11",
+      "campaign_id": 221,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 1,
+      "seconds": 2.2,
+      "passed": true
+    },
+    {
+      "case": "clean.fewer_phantoms",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "improvement: shorter-lived clutter",
+      "campaign_id": 222,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 0,
+      "seconds": 2.2,
+      "passed": true
+    },
+    {
+      "case": "clean.better_peds",
+      "category": "clean",
+      "level": "control",
+      "mechanism": "improvement: pedestrian miss rate 4% -> 3.5%",
+      "campaign_id": 223,
+      "status": "pass",
+      "flagged": [],
+      "top_category": null,
+      "failures": 1,
+      "seconds": 2.0,
+      "passed": true
+    }
+  ],
+  "summary": {
+    "reproduced": {
+      "n": 50,
+      "hit": 38,
+      "rate": 0.76
+    },
+    "detected": {
+      "n": 50,
+      "hit": 38,
+      "rate": 0.76
+    },
+    "top1": {
+      "n": 50,
+      "hit": 36,
+      "rate": 0.72
+    },
+    "repro_ok": {
+      "n": 50,
+      "hit": 44,
+      "rate": 0.88
+    },
+    "by_category": {
+      "control_instability": {
+        "n": 10,
+        "hit": 5,
+        "rate": 0.5
+      },
+      "disengagement": {
+        "n": 10,
+        "hit": 8,
+        "rate": 0.8
+      },
+      "latency_spike": {
+        "n": 10,
+        "hit": 10,
+        "rate": 1.0
+      },
+      "perception_error": {
+        "n": 10,
+        "hit": 7,
+        "rate": 0.7
+      },
+      "route_deviation": {
+        "n": 10,
+        "hit": 8,
+        "rate": 0.8
+      }
+    },
+    "by_level": {
+      "moderate": {
+        "n": 25,
+        "hit": 16,
+        "rate": 0.64
+      },
+      "severe": {
+        "n": 25,
+        "hit": 22,
+        "rate": 0.88
+      }
+    },
+    "controls": {
+      "n": 10,
+      "false_positives": 1
+    },
+    "missed": [
+      "perception_error.range_calibration.moderate",
+      "perception_error.range_calibration.severe",
+      "perception_error.slow_confirmation.moderate",
+      "route_deviation.gentle_curve_offset.moderate",
+      "route_deviation.lateral_bias.subtle",
+      "control_instability.steer_gain.moderate",
+      "control_instability.steer_gain.severe",
+      "control_instability.short_lookahead.moderate",
+      "control_instability.integral.moderate",
+      "control_instability.integral.severe",
+      "disengagement.headway.moderate",
+      "disengagement.watchdog.moderate"
+    ]
+  }
+}

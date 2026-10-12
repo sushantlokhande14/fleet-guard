@@ -2,6 +2,45 @@
 
 Measured numbers only. Everything here can be regenerated with the commands shown.
 
+## Seeded-regression benchmark, classifiers 2026.10 (October)
+
+```bash
+docker compose run --rm -v "$PWD/docs:/app/docs" migrate \
+    fleetguard benchmark --seed-start 300000 --out /app/docs/benchmark/2026-10-seeds-300000
+```
+
+Same 50 seeded regressions and 10 clean controls as in March (below), after two
+classifier fixes that came out of the March misses: latency is compared only
+over the time both drives were running, and a watchdog trip without extra
+deadline misses is filed as a disengagement rather than a latency regression.
+
+| run | seeds | reproduced | ranked first | controls flagged |
+|---|---|---|---|---|
+| March, classifiers 2026.03 | 50000+ | 37 / 50 (74%) | 35 / 50 | 1 / 10 |
+| October, classifiers 2026.10 | 50000+ (same as March) | 38 / 50 (76%) | 36 / 50 | 1 / 10 |
+| October, classifiers 2026.10 | **300000+ (never used before)** | **38 / 50 (76%)** | 36 / 50 | 1 / 10 |
+
+The first October row is not independent evidence: both fixes were written
+because of two March misses on those seeds, and the one extra case caught is
+`disengagement.watchdog.severe`. The second October row runs every campaign on
+scenarios no part of the system was tuned on; it lands on the same 38 and the
+same 12 misses, so the result is stable across seed ranges. The other fixed case,
+`control_instability.integral.severe`, is no longer misattributed to latency but
+its few remaining failures fall under the flag threshold, so it still counts as
+a miss.
+
+By category (fresh seeds): latency 10/10, route 8/10, disengagement 8/10,
+perception 7/10, control 5/10. Severe 22/25, moderate 16/25.
+
+Per case: [2026-10-seeds-300000](benchmark/2026-10-seeds-300000/benchmark.md),
+[2026-10-seeds-50000](benchmark/2026-10-seeds-50000/benchmark.md).
+
+The remaining misses are the ones explained for March below, minus the two
+attribution bugs: five symptom/label mismatches, six regressions under the noise
+floor, and `integral.severe` now also under it. `clean.position_noise` is still
+flagged (5 control-instability failures over 700 scenarios, just over the
+threshold).
+
 ## Seeded-regression benchmark (March)
 
 ```bash
@@ -26,7 +65,7 @@ seed and the two build definitions).
 | clean controls flagged | 1 / 10 |
 | simulated drives | 84,000 |
 
-Per case: [benchmark/benchmark.md](benchmark/benchmark.md).
+Per case: [benchmark/2026-03/benchmark.md](benchmark/2026-03/benchmark.md).
 
 By category: perception 7/10, latency 10/10, route 8/10, control 5/10, disengagement 7/10.
 Severe 21/25, moderate 16/25.
