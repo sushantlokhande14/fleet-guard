@@ -87,8 +87,11 @@ the facts, plus the command that replays the pair:
 
 All measured, all reproducible; details and caveats in [docs/RESULTS.md](docs/RESULTS.md).
 
-- Seeded-regression benchmark (50 injected bugs, 10 clean controls, held-out
-  seeds, 84,000 drives): **37/50 reproduced**, 1/10 controls flagged.
+- Seeded-regression benchmark (50 injected bugs, 10 clean controls, 84,000
+  drives per run): **38/50 reproduced** on a seed range never used for tuning,
+  36/50 with the injected category ranked first, 1/10 clean controls flagged.
+  (37/50 in March; the two classifier fixes since then are described in
+  [RESULTS.md](docs/RESULTS.md) along with every remaining miss.)
 - One 100,000-drive campaign end to end in 52 s (simulate 24 s, ingest 26 s,
   classify 2 s) on a 22-thread desktop.
 - LLM narratives on a local `qwen2.5:7b`: 28/30 accepted by the guard (both
