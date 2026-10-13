@@ -32,6 +32,11 @@ jobs:
 
   python:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    name: python (${{ matrix.python }})
     services:
       postgres:
         image: postgres:16-alpine
@@ -50,7 +55,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
       - name: Build fgsim
         run: |
           sudo apt-get update

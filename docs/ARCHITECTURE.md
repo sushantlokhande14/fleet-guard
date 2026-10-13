@@ -78,6 +78,14 @@ if the drive disengaged, the earliest signal at or before the takeover wins
 otherwise the earliest timed signal wins. Metric-only signals without a time can
 only explain a takeover if they are strong.
 
+Two rules keep drive length from leaking into latency (classifiers 2026.10).
+Deadline misses and near-budget cycles are compared only up to the moment both
+drives were still running: with shared draws every extra cycle carries its own
+spikes, so whole-drive totals blamed the planner for regressions that only made
+drives longer or shorter. And a watchdog trip only counts as latency when the
+candidate also missed more deadlines in that window; otherwise the planner was
+no slower and the trip comes from a policy change, which is a disengagement.
+
 Each failure gets a **signature** `category/family/key` (for example
 `perception_error/ped_crossing/pedestrian`); failures sharing a signature are
 treated as one probable bug.
