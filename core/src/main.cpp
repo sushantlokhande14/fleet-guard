@@ -15,7 +15,7 @@
 
 namespace {
 
-constexpr const char* kVersion = "0.1.0";
+constexpr const char* kVersion = "0.2.0";
 
 const char* kUsage = R"(usage: fgsim <command> [options]
 

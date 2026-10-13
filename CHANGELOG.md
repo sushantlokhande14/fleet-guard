@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.0 (October 2026)
+
+**Classifiers 2026.10**
+- Latency is compared only over the time both drives were running, so a
+  regression that changes drive length is no longer blamed on the planner.
+- A watchdog trip without extra deadline misses is a disengagement (a policy
+  change), not a latency regression.
+- Seeded benchmark: 38/50 reproduced on a fresh seed range (300000+), same on the
+  March seeds; 37/50 before. Details and every remaining miss in docs/RESULTS.md.
+
+**Tooling**
+- `fleetguard benchmark --seed-start`, classifier version recorded per run,
+  `tools/bench_diff.py` to compare two runs case by case.
+- "Copy summary" on the campaign page (markdown with links back to the UI).
+- CI tests the Python package on 3.11 and 3.12.
+
+**Fixed**
+- Repository line endings normalized to LF (`.gitattributes`); the dashboard
+  generator writes LF so the drift check is OS independent.
+
 ## 0.1.0 (June 2026)
 
 First complete version.
